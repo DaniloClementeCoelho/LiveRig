@@ -174,14 +174,19 @@ class ReaperController:
         self.close_project()
 
     def shutdown(self) -> None:
-        """Close REAPER when LiveRig exits."""
-        if self._current_song is not None:
-            self._send_action_or_raise(ACTION_STOP)
 
-        if self.is_running() or self._ready_checker():
-            self._send_action_or_raise(ACTION_QUIT)
+        if platform.system() == "Darwin":
+            subprocess.run([
+                "osascript",
+                "-e",
+                'tell application "REAPER" to quit'
+            ])
+        else:
+            if self.is_running() or self._ready_checker():
+                self._send_action(ACTION_QUIT)
 
         self._close_process()
+
         self._current_song = None
         self._playing = False
 
