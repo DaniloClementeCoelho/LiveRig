@@ -13,6 +13,8 @@ from pathlib import Path
 import shutil
 from  models import Song
 from osc_transport import OSCTransport
+from playback_clock import PlaybackClock
+from pathlib import Path
 
 ProjectLauncher = Callable[[Path], Optional[subprocess.Popen]]
 ReaperLauncher = Callable[[], Optional[subprocess.Popen]]
@@ -64,6 +66,28 @@ class ReaperController:
         self._current_song: Optional[Song] = None
         self._playing = False
         self._osc = OSCTransport() if platform.system() == "Darwin" else None
+        if platform.system() == "Windows":
+            position_file = (
+                Path.home()
+                / "AppData"
+                / "Roaming"
+                / "REAPER"
+                / "LiveRig"
+                / "position.txt"
+            )
+        else:
+            position_file = (
+                Path.home()
+                / "Library"
+                / "Application Support"
+                / "REAPER"
+                / "LiveRig"
+                / "position.txt"
+            )
+
+        self._clock = PlaybackClock(position_file)
+
+
 
     def _go_to_start(self):
         self._osc.goto_marker(1)
@@ -111,9 +135,11 @@ class ReaperController:
 
         self.open_project(song)
         self._wait_until_project_loaded()
-        self.play()
-        time.sleep(0.15)
         self._go_to_start()
+        self.play()
+
+
+
 
     def close_project(self) -> None:
         """Close the current project while keeping REAPER open."""
@@ -218,23 +244,20 @@ class ReaperController:
         raise RuntimeError("REAPER nao ficou pronto para receber comandos.")
 
 
-    def _wait_until_project_loaded(self) -> None:
-        """Wait until REAPER is ready to receive OSC commands."""
+    def _wait_until_project_loaded(self):
+        deadline = time.time() + 5
 
-        deadline = time.monotonic() + 10
-
-        while time.monotonic() < deadline:
-            if self.is_ready():
+        while time.time() < deadline:
+            if self._clock.project_ready():
                 return
+            time.sleep(0.01)
 
-            time.sleep(0.05)
-
-        raise RuntimeError("Projeto não ficou pronto para reprodução.")
-
+        raise RuntimeError("Projeto não ficou pronto.")
 
     def _send_action_or_raise(self, action_id: int) -> None:
         if not self._action_sender(action_id):
             raise RuntimeError(f"REAPER nao aceitou o Action ID {action_id}.")
+
 
     def _close_process(self) -> None:
         if self._process is None or self._process.poll() is not None:

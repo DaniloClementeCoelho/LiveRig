@@ -24,7 +24,7 @@ class PlaybackClock:
 
             self._last_position = position
             self._last_playing = playing
-            self._project_ready = project_ready
+            self._last_project_ready = project_ready
 
         except Exception:
             pass
@@ -36,3 +36,7 @@ class PlaybackClock:
     def is_playing(self) -> bool:
         self._read()
         return self._last_playing
+    
+    def project_ready(self) -> bool:
+        self._read()
+        return self._last_project_ready

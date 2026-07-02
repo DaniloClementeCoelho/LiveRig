@@ -23,24 +23,19 @@ function Main()
     end
 
     if not project_ready then
-        project_ready = true
+        if reaper.CountTracks(0) > 0 then
+            project_ready = true
+        end
     end
+    
 
     local playing = reaper.GetPlayState()
     local position = reaper.GetPlayPosition()
 
     local file, err = io.open(output_file, "w")
 
-    if not file then
-        --reaper.ShowConsoleMsg("Erro abrindo arquivo: " .. tostring(err) .. "\n")
-    else
-        --reaper.ShowConsoleMsg("Arquivo aberto com sucesso\n")
-    end
-
     if file then
         file:write(string.format("%.3f\n", position))
-        --file:write(string.format("%d\n", playing))
-        --reaper.ShowConsoleMsg("PlayState = " .. tostring(playing) .. "\n")
         file:write(string.format("%d\n", playing))
         file:write(string.format("%d\n", project_ready and 1 or 0))
         file:close()
