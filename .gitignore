@@ -9,7 +9,7 @@ venv/
 
 # VS Code / Cursor (compartilhar config do projeto; ignorar o resto)
 .vscode/*
-!.vscode/settings.json
+#!.vscode/settings.json
 
 # macOS
 .DS_Store

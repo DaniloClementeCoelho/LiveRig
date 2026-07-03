@@ -38,6 +38,25 @@ python main.py
 
 Na primeira execução, escolha a pasta **shows** que contém as músicas do set. A preferência fica salva em `settings.json`.
 
+## Importar projetos do REAPER
+
+O `LiveRigImporter` prepara arquivos `.rpp` para o formato lido pelo LiveRig.
+A pasta de saida nao e fixa: configure por argumento, variavel de ambiente ou arquivo local.
+
+```powershell
+python -m LiveRigImporter.main caminho\musica.rpp --output caminho\da\saida
+```
+
+Ou crie `LiveRigImporter/config.local.json`:
+
+```json
+{
+  "output_dir": "D:/Projetos AI/LiveRig/shows"
+}
+```
+
+Tambem e possivel usar a variavel `LIVERIG_IMPORTER_OUTPUT_DIR`.
+
 ## Cursor / VS Code
 
 O projeto inclui `.vscode/settings.json` para usar o interpretador do `.venv` e ativar o ambiente automaticamente em terminais novos.

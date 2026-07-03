@@ -1,0 +1,120 @@
+from __future__ import annotations
+
+from argparse import ArgumentParser
+import json
+import os
+from pathlib import Path
+import sys
+
+try:
+    from .importer import import_song
+    from .parser import parse_rpp
+except ImportError:
+    from importer import import_song
+    from parser import parse_rpp
+
+
+DEFAULT_CONFIG = Path(__file__).resolve().parent / "config.local.json"
+OUTPUT_ENV_VAR = "LIVERIG_IMPORTER_OUTPUT_DIR"
+
+
+def main() -> int:
+    parser = ArgumentParser(
+        description="Importa projetos .rpp de 3 tracks para o formato de pacote do LiveRig."
+    )
+    parser.add_argument(
+        "source",
+        nargs="?",
+        default=Path.cwd() / "input",
+        type=Path,
+        help="Arquivo .rpp ou pasta contendo arquivos .rpp. Padrao: ./input",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Pasta onde os pacotes do LiveRig serao criados.",
+    )
+    parser.add_argument(
+        "--config",
+        default=DEFAULT_CONFIG,
+        type=Path,
+        help="Arquivo JSON de configuracao. Padrao: LiveRigImporter/config.local.json",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Usa a pasta da musica existente em vez de criar 'Nome 2'.",
+    )
+    args = parser.parse_args()
+
+    sources = _find_sources(args.source)
+    if not sources:
+        print(f"Nenhum .rpp encontrado em: {args.source}")
+        return 1
+
+    output = _resolve_output(args.output, args.config)
+    if output is None:
+        print("Pasta de saida nao configurada.")
+        print("Use uma destas opcoes:")
+        print("  python -m LiveRigImporter.main entrada.rpp --output caminho\\da\\saida")
+        print(f"  $env:{OUTPUT_ENV_VAR} = 'caminho\\da\\saida'")
+        print(f'  crie {args.config} com: {{"output_dir": "caminho/da/saida"}}')
+        return 1
+
+    output.mkdir(parents=True, exist_ok=True)
+
+    for source in sources:
+        song = parse_rpp(source)
+        folder = import_song(song, output, overwrite=args.overwrite)
+        print(f"OK {song.title} -> {folder}")
+        for warning in song.warnings:
+            print(f"   aviso: {warning}")
+
+    return 0
+
+
+def _find_sources(source: Path) -> list[Path]:
+    if source.is_file() and source.suffix.casefold() == ".rpp":
+        return [source]
+
+    if source.is_dir():
+        return sorted(
+            [path for path in source.rglob("*") if path.is_file() and path.suffix.casefold() == ".rpp"],
+            key=lambda path: str(path).casefold(),
+        )
+
+    return []
+
+
+def _resolve_output(argument: Path | None, config_path: Path) -> Path | None:
+    if argument is not None:
+        return argument
+
+    env_value = os.environ.get(OUTPUT_ENV_VAR)
+    if env_value:
+        return Path(env_value)
+
+    config = _read_config(config_path)
+    output_dir = config.get("output_dir")
+    if isinstance(output_dir, str) and output_dir.strip():
+        return Path(output_dir)
+
+    return None
+
+
+def _read_config(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+
+    try:
+        with path.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    return data if isinstance(data, dict) else {}
+
+
+if __name__ == "__main__":
+    sys.exit(main())
