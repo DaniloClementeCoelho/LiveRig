@@ -1,7 +1,6 @@
-from  reaper_controller import ReaperController
-from  settings import AppSettings
-from  ui import run_app
-from  playback_clock import PlaybackClock
+from reaper_controller import ReaperController
+from settings import AppSettings
+from views.ui import run_app
 
 
 def main() -> None:

@@ -90,17 +90,25 @@ class ReaperController:
 
 
     def _go_to_start(self):
-        self._osc.goto_marker(1)
+        if self._osc is not None:
+            self._osc.goto_marker(1)
+            return
+
+        self._send_action_or_raise(ACTION_GO_TO_START)
 
 
 
     def start(self) -> None:
         """Launch REAPER if it is not already running."""
-        if self.is_running() or self.is_ready():
+        if self.is_ready():
             return
 
-        self._process = self._reaper_launcher()
-        if self._process is None:
+        if not self.is_running():
+            self._process = self._reaper_launcher()
+            if self._process is None:
+                return
+
+        if platform.system() == "Darwin":
             return
 
         self._wait_until_reaper_ready()
@@ -114,28 +122,42 @@ class ReaperController:
         if not song.project_path.exists():
             raise FileNotFoundError(f"Projeto nao encontrado: {song.project_path}")
 
-        if self._current_song == song:
+        if self._current_song == song and self.is_ready():
             return
 
-        if not self.is_running() and not self.is_ready():
-            self.start()
+        if self._current_song == song and not self.is_ready():
+            self._current_song = None
+            self._playing = False
+
+        if not self.is_ready():
+            try:
+                self.start()
+            except RuntimeError:
+                if platform.system() != "Windows":
+                    raise
 
         project_process = self._project_launcher(song.project_path)
 
         self._minimize_reaper_during_project_load()
-        if self._process is None:
+        if self._process is None or not self.is_running():
             self._process = project_process
         self._current_song = song
         self._playing = False
 
     def play_from_start(self, song: Song) -> None:
         """Open a project and start playback from the beginning."""
+        opening_new_project = self._current_song != song or not self.is_ready()
         if self._current_song is not None and self._current_song != song:
-            self.close_project()
+            if self.is_ready():
+                self.close_project()
+            else:
+                self._current_song = None
+                self._playing = False
 
         self.open_project(song)
         self._wait_until_project_loaded()
-        self._go_to_start()
+        if not opening_new_project or platform.system() != "Windows":
+            self._go_to_start()
         self.play()
 
 
@@ -147,10 +169,15 @@ class ReaperController:
         if self._current_song is None:
             return
 
+        if not self.is_ready():
+            self._current_song = None
+            self._playing = False
+            return
+
         if platform.system() == "Darwin":
             self._close_current_project()
         else:
-            self._send_action_or_raise(ACTION_CLOSE_PROJECT)
+            self._action_sender(ACTION_CLOSE_PROJECT)
 
         self._current_song = None
         self._playing = False
@@ -209,7 +236,7 @@ class ReaperController:
             ])
         else:
             if self.is_running() or self._ready_checker():
-                self._send_action(ACTION_QUIT)
+                self._action_sender(ACTION_QUIT)
 
         self._close_process()
 
@@ -282,6 +309,18 @@ class ReaperController:
 
         system = platform.system()
         if system == "Windows":
+            if not self.is_ready():
+                os.startfile(project_path)  # type: ignore[attr-defined]
+                return None
+
+            executable = self._find_reaper_executable()
+            if executable is not None:
+                return self._launch_reaper_executable(
+                    executable,
+                    project_path,
+                    reuse_instance=True,
+                )
+
             os.startfile(project_path)  # type: ignore[attr-defined]
             return None
 
@@ -392,8 +431,9 @@ class ReaperController:
 
     def _find_reaper_window(self) -> Optional[int]:
         user32 = ctypes.windll.user32
-        target_pid = self._process.pid if self._process is not None else None
-        found_hwnd: list[int] = []
+        target_pid = self._process.pid if self.is_running() else None
+        matching_hwnd: list[int] = []
+        fallback_hwnd: list[int] = []
 
         enum_windows_proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
 
@@ -406,14 +446,20 @@ class ReaperController:
             if target_pid is not None:
                 pid = ctypes.c_ulong()
                 user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-                if pid.value != target_pid:
-                    return True
+                if pid.value == target_pid:
+                    matching_hwnd.append(hwnd)
+                    return False
 
-            found_hwnd.append(hwnd)
+                fallback_hwnd.append(hwnd)
+                return True
+
+            fallback_hwnd.append(hwnd)
             return False
 
         user32.EnumWindows(enum_windows_proc(callback), 0)
-        return found_hwnd[0] if found_hwnd else None
+        if matching_hwnd:
+            return matching_hwnd[0]
+        return fallback_hwnd[0] if fallback_hwnd else None
 
 
     def install_lua_script(self) -> Path:

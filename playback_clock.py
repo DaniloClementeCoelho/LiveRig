@@ -8,7 +8,7 @@ class PlaybackClock:
         self.position_file = position_file
         self._last_position = 0.0
         self._last_playing = False
-        self._project_ready = False
+        self._last_project_ready = False
 
     def _read(self) -> None:
         try:

@@ -7,8 +7,9 @@ __pycache__/
 .venv/
 venv/
 
-# VS Code
-.vscode/
+# VS Code / Cursor (compartilhar config do projeto; ignorar o resto)
+.vscode/*
+!.vscode/settings.json
 
 # macOS
 .DS_Store

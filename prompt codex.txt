@@ -1,0 +1,262 @@
+Você é o desenvolvedor principal do projeto LiveRig.
+
+IMPORTANTE:
+Não faça correções pontuais.
+Faça uma refatoração completa da camada de interface mantendo todas as funcionalidades existentes.
+
+Objetivos:
+
+1. Reduzir drasticamente a complexidade do ui.py.
+2. Criar uma arquitetura modular.
+3. Preparar o projeto para Drag & Drop profissional.
+4. Não alterar nenhuma funcionalidade do REAPER.
+5. Não alterar PlaybackClock, ReaperController ou SongManager, exceto se for absolutamente necessário.
+
+========================
+ARQUITETURA DESEJADA
+========================
+
+Criar os seguintes componentes:
+
+views/
+    ui.py
+    library_view.py
+    playlist_view.py
+    player_view.py
+
+widgets/
+    library_item.py
+    playlist_item.py
+    drag_preview.py
+
+controllers/
+    drag_controller.py
+
+Manter:
+
+song_manager.py
+reaper_controller.py
+playback_clock.py
+lyrics_loader.py
+settings.py
+
+========================
+OBJETIVOS FUNCIONAIS
+========================
+
+Biblioteca:
+
+- lista de músicas
+- busca instantânea
+- scroll
+- seleção
+
+Playlist:
+
+- lista independente
+- inicialmente vazia
+- preparada para receber músicas
+
+Player:
+
+- música atual
+- observações
+- letra sincronizada
+
+========================
+DRAG & DROP
+========================
+
+Não utilizar hacks no CTkScrollableFrame.
+
+Implementar drag centralizado.
+
+Criar:
+
+DragController
+
+responsável por:
+
+- start_drag(song)
+- move_drag(x,y)
+- end_drag()
+
+Criar:
+
+DragPreview
+
+Widget flutuante.
+
+Quando o usuário começa um drag:
+
+- mostrar um cartão com o nome da música
+- seguir o mouse
+- esconder ao soltar
+
+Não mover o widget original.
+
+========================
+PLAYLIST
+========================
+
+A Playlist deve possuir API própria.
+
+Exemplo:
+
+playlist_view.add(song)
+
+playlist_view.remove(song)
+
+playlist_view.move(old,new)
+
+playlist_view.clear()
+
+playlist_view.set_playlist(list)
+
+A UI não deve desenhar manualmente os itens.
+
+========================
+LIBRARY
+========================
+
+A Library também deve possuir API própria.
+
+Exemplo:
+
+library_view.set_songs()
+
+library_view.filter(text)
+
+library_view.select(song)
+
+========================
+RESPONSABILIDADES
+========================
+
+ui.py
+
+Somente:
+
+- criar layout
+- conectar eventos
+- chamar ReaperController
+
+Nunca desenhar itens.
+
+========================
+ITEMS
+========================
+
+LibraryItem
+
+deve representar apenas uma música.
+
+PlaylistItem
+
+deve representar apenas uma música da playlist.
+
+Nenhum deles deve conhecer o Reaper.
+
+========================
+BUSCA
+========================
+
+Busca instantânea.
+
+Enquanto digita:
+
+Beat
+
+↓
+
+Beat It
+
+Beautiful Day
+
+Because the Night
+
+Pesquisa por:
+
+titulo
+
+artista
+
+ignorando maiúsculas
+
+========================
+LAYOUT
+========================
+
+3 colunas.
+
++-------------------------------------------------------------+
+| Biblioteca | Playlist | Música / Letra                      |
++-------------------------------------------------------------+
+
+Biblioteca fixa.
+
+Playlist fixa.
+
+Player ocupa todo restante.
+
+Adicionar botão para ocultar Biblioteca.
+
+========================
+PRÓXIMAS FUNCIONALIDADES
+========================
+
+A arquitetura deve facilitar posteriormente:
+
+- salvar playlist
+- abrir playlist
+- drag biblioteca -> playlist
+- drag reorder playlist
+- próxima música
+- modo show
+- múltiplas playlists
+
+========================
+IMPORTANTE
+========================
+
+Não criar código duplicado.
+
+Aplicar SOLID.
+
+Aplicar MVC.
+
+Criar componentes reutilizáveis.
+
+Reduzir ui.py para aproximadamente 300~400 linhas.
+
+Não quebrar nenhuma funcionalidade existente.
+
+========================
+ENTREGA
+========================
+
+Entregar arquivos completos.
+
+Não entregar patches.
+
+Cada arquivo deve estar pronto para substituir o existente.
+
+Todos os imports devem funcionar.
+
+Todo o projeto deve compilar ao final.
+
+Se precisar alterar mais arquivos para manter a arquitetura consistente, faça isso.
+
+Priorize qualidade da arquitetura em vez de minimizar mudanças.
+
+
+Não tente preservar a estrutura atual da UI.
+
+Considere a UI existente apenas como referência funcional.
+
+Reprojete a interface utilizando uma arquitetura profissional, desde que todas as funcionalidades existentes continuem funcionando.
+
+Prefira remover código legado em vez de adaptá-lo.
+
+Evite soluções temporárias ou "gambiarras". O objetivo é que essa seja a arquitetura definitiva da UI do LiveRig.
+
