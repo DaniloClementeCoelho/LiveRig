@@ -22,6 +22,7 @@ def import_song(song: Song, output_root: Path, overwrite: bool = False) -> Path:
     if song.source_file.resolve() != project_path.resolve():
         shutil.copy2(song.source_file, project_path)
 
+    _copy_media_files(song, folder)
     ensure_start_marker(project_path, song)
     lyrics_name = _write_text(folder / "lyrics.md", export_lyrics_markdown(song))
     notes_name = _write_text(folder / "notes.md", song.notes)
@@ -40,6 +41,7 @@ def update_song(song: Song, folder: Path) -> None:
     target = folder / "project.rpp"
     if song.source_file.resolve() != target.resolve():
         shutil.copy2(song.source_file, target)
+    _copy_media_files(song, folder)
     ensure_start_marker(target, song)
 
     data = _build_config(
@@ -83,6 +85,43 @@ def _write_text(path: Path, text: str) -> str | None:
         return None
     path.write_text(text, encoding="utf-8")
     return path.name
+
+
+def _copy_media_files(song: Song, folder: Path) -> None:
+    for media_file in song.media_files:
+        source = _resolve_media_source(song.source_file.parent, media_file)
+        if source is None:
+            song.warnings.append(f"Arquivo de audio nao encontrado: {media_file}")
+            continue
+
+        destination = _media_destination(folder, media_file, source)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if source.resolve() != destination.resolve():
+            shutil.copy2(source, destination)
+
+
+def _resolve_media_source(project_folder: Path, media_file: str) -> Path | None:
+    raw_path = Path(media_file)
+    candidates = []
+    if raw_path.is_absolute():
+        candidates.append(raw_path)
+    else:
+        candidates.append(project_folder / raw_path)
+        candidates.append(project_folder / raw_path.name)
+        candidates.append(project_folder / "Media" / raw_path.name)
+
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file():
+            return candidate
+
+    return None
+
+
+def _media_destination(folder: Path, media_file: str, source: Path) -> Path:
+    raw_path = Path(media_file)
+    if raw_path.is_absolute():
+        return folder / "Media" / source.name
+    return folder / raw_path
 
 
 def _safe_folder_name(name: str) -> str:

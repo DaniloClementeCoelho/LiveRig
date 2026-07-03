@@ -38,6 +38,11 @@ python main.py
 
 Na primeira execução, escolha a pasta **shows** que contém as músicas do set. A preferência fica salva em `settings.json`.
 
+
+
+
+
+
 ## Importar projetos do REAPER
 
 O `LiveRigImporter` prepara arquivos `.rpp` para o formato lido pelo LiveRig.

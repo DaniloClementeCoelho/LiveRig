@@ -30,6 +30,7 @@ ACTION_STOP = 1016
 ACTION_CLOSE_PROJECT = 40860
 ACTION_QUIT = 40004
 ACTION_GO_TO_START = 40042
+ACTION_GO_TO_MARKER_1 = 40161
 WINDOWS_REAPER_CANDIDATES = [
     Path("C:/Program Files/REAPER (x64)/reaper.exe"),
     Path("C:/Program Files/REAPER/reaper.exe"),
@@ -94,7 +95,8 @@ class ReaperController:
             self._osc.goto_marker(1)
             return
 
-        self._send_action_or_raise(ACTION_GO_TO_START)
+        if not self._action_sender(ACTION_GO_TO_MARKER_1):
+            self._send_action_or_raise(ACTION_GO_TO_START)
 
 
 
@@ -156,8 +158,7 @@ class ReaperController:
 
         self.open_project(song)
         self._wait_until_project_loaded()
-        if not opening_new_project or platform.system() != "Windows":
-            self._go_to_start()
+        self._go_to_start()
         self.play()
 
 

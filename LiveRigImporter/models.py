@@ -24,5 +24,6 @@ class Song:
     source_file: Path
     start_position: float = 0.0
     lyrics: list[RppItem] = field(default_factory=list)
+    media_files: list[str] = field(default_factory=list)
     notes: str = ""
     warnings: list[str] = field(default_factory=list)

@@ -15,7 +15,10 @@ catalog = MusicCatalog()
 
 TEMPO_RE = re.compile(r"^\s*TEMPO\s+([0-9.]+)", re.MULTILINE)
 MARKER_RE = re.compile(r'^\s*MARKER\s+(\d+)\s+([0-9.]+)\s+"([^"]*)"(.*)$')
+CURSOR_RE = re.compile(r"^\s*CURSOR\s+[-0-9.]+")
 NAME_RE = re.compile(r'^\s*NAME\s+(?:"([^"]*)"|(.+))\s*$')
+LYRICS_TRACK_INDEX = 2
+LYRICS_TRACK_NAME = "Lyrics"
 POSITION_RE = re.compile(r"^\s*POSITION\s+([0-9.]+)")
 LENGTH_RE = re.compile(r"^\s*LENGTH\s+([0-9.]+)")
 FILE_RE = re.compile(r'^\s*FILE\s+"?([^"\n]+)"?')
@@ -28,6 +31,7 @@ def parse_rpp(path: Path) -> Song:
     audio_track = _find_audio_track(tracks, lyric_track)
     audio_items = audio_track["items"] if audio_track is not None else []
     all_items = [item for track in tracks for item in track["items"]]
+    media_files = _media_files(all_items)
 
     start_position = min((item.position for item in audio_items), default=0.0)
     duration_end = max((item.end for item in all_items), default=start_position)
@@ -46,6 +50,7 @@ def parse_rpp(path: Path) -> Song:
         source_file=path,
         start_position=start_position,
         lyrics=lyric_track["items"] if lyric_track is not None else [],
+        media_files=media_files,
         warnings=warnings,
     )
 
@@ -54,11 +59,19 @@ def ensure_start_marker(path: Path, song: Song) -> None:
     text = path.read_text(encoding="utf-8", errors="ignore")
     lines = text.splitlines(keepends=True)
     newline = _detect_newline(text)
-    marker_line = f'MARKER 1 {_format_float(song.start_position)} "{song.title}" 1{newline}'
+    marker_line = _start_marker_line(song, newline)
+    cursor_line = _cursor_line(song, newline)
     output: list[str] = []
     replaced = False
+    cursor_replaced = False
 
     for line in lines:
+        if CURSOR_RE.match(line.rstrip("\r\n")):
+            if not cursor_replaced:
+                output.append(cursor_line)
+                cursor_replaced = True
+            continue
+
         marker_match = MARKER_RE.match(line.rstrip("\r\n"))
         if marker_match and marker_match.group(1) == "1":
             if not replaced:
@@ -71,7 +84,63 @@ def ensure_start_marker(path: Path, song: Song) -> None:
         insert_at = _marker_insert_index(output)
         output.insert(insert_at, marker_line)
 
+    if not cursor_replaced:
+        insert_at = _project_setting_insert_index(output)
+        output.insert(insert_at, cursor_line)
+
     path.write_text("".join(output), encoding="utf-8")
+    ensure_lyrics_track_name(path)
+
+
+def ensure_lyrics_track_name(path: Path) -> None:
+    """Garante que a terceira track do projeto se chame 'Lyrics' (exigido pelo LiveRig)."""
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    lines = text.splitlines(keepends=True)
+    newline = _detect_newline(text)
+    indent = _name_line_indent(lines)
+    output: list[str] = []
+    track_index = -1
+    track_depth = 0
+    in_track = False
+    name_set = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith("<TRACK"):
+            track_index += 1
+            in_track = True
+            track_depth = 1
+            name_set = False
+            output.append(line)
+            continue
+
+        if not in_track:
+            output.append(line)
+            continue
+
+        if track_index == LYRICS_TRACK_INDEX and not name_set and NAME_RE.match(line.rstrip("\r\n")):
+            output.append(f"{indent}NAME {LYRICS_TRACK_NAME}{newline}")
+            name_set = True
+            continue
+
+        if stripped.startswith("<"):
+            track_depth += 1
+        elif stripped == ">":
+            track_depth -= 1
+            if track_depth == 0:
+                if track_index == LYRICS_TRACK_INDEX and not name_set:
+                    output.append(f"{indent}NAME {LYRICS_TRACK_NAME}{newline}")
+                    name_set = True
+                in_track = False
+
+        output.append(line)
+
+    path.write_text("".join(output), encoding="utf-8")
+
+
+def start_marker_position(song: Song) -> str:
+    return _format_float(song.start_position)
 
 
 def export_lyrics_markdown(song: Song) -> str:
@@ -203,6 +272,13 @@ def _parse_name(line: str) -> str | None:
     return (match.group(1) or match.group(2) or "").strip()
 
 
+def _name_line_indent(lines: list[str]) -> str:
+    for line in lines:
+        if NAME_RE.match(line.rstrip("\r\n")):
+            return line[: len(line) - len(line.lstrip("\r\n"))]
+    return "    "
+
+
 def _find_track(tracks: list[dict[str, object]], aliases: tuple[str, ...]) -> dict[str, object] | None:
     normalized_aliases = {alias.casefold() for alias in aliases}
     for track in tracks:
@@ -230,6 +306,20 @@ def _find_audio_track(
 
 def _looks_like_audio(item: RppItem) -> bool:
     return Path(item.source).suffix.casefold() in {".wav", ".mp3", ".flac", ".ogg", ".aiff", ".aif"}
+
+
+def _media_files(items: list[RppItem]) -> list[str]:
+    media = []
+    seen = set()
+    for item in items:
+        if not item.source or not _looks_like_audio(item):
+            continue
+        key = item.source.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        media.append(item.source)
+    return media
 
 
 def _extract_bpm(text: str) -> int:
@@ -275,6 +365,27 @@ def _marker_insert_index(lines: list[str]) -> int:
         if line.lstrip().startswith("<TRACK"):
             return index
     return len(lines)
+
+
+def _project_setting_insert_index(lines: list[str]) -> int:
+    for index, line in enumerate(lines):
+        stripped = line.lstrip()
+        if stripped.startswith("MARKER") or stripped.startswith("<TRACK"):
+            return index
+    return len(lines)
+
+
+def _start_marker_line(song: Song, newline: str) -> str:
+    name = _escape_marker_name(f"START - {song.title}")
+    return f'  MARKER 1 {_format_float(song.start_position)} "{name}" 0 0 1{newline}'
+
+
+def _cursor_line(song: Song, newline: str) -> str:
+    return f"  CURSOR {_format_float(song.start_position)}{newline}"
+
+
+def _escape_marker_name(name: str) -> str:
+    return name.replace('"', "'")
 
 
 def _detect_newline(text: str) -> str:

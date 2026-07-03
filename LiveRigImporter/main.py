@@ -8,10 +8,10 @@ import sys
 
 try:
     from .importer import import_song
-    from .parser import parse_rpp
+    from .parser import parse_rpp, start_marker_position
 except ImportError:
     from importer import import_song
-    from parser import parse_rpp
+    from parser import parse_rpp, start_marker_position
 
 
 DEFAULT_CONFIG = Path(__file__).resolve().parent / "config.local.json"
@@ -47,6 +47,9 @@ def main() -> int:
         help="Usa a pasta da musica existente em vez de criar 'Nome 2'.",
     )
     args = parser.parse_args()
+    args.source = _clean_path_argument(args.source)
+    args.output = _clean_path_argument(args.output)
+    args.config = _clean_path_argument(args.config)
 
     sources = _find_sources(args.source)
     if not sources:
@@ -68,6 +71,7 @@ def main() -> int:
         song = parse_rpp(source)
         folder = import_song(song, output, overwrite=args.overwrite)
         print(f"OK {song.title} -> {folder}")
+        print(f"   marker: {start_marker_position(song)}s")
         for warning in song.warnings:
             print(f"   aviso: {warning}")
 
@@ -89,18 +93,24 @@ def _find_sources(source: Path) -> list[Path]:
 
 def _resolve_output(argument: Path | None, config_path: Path) -> Path | None:
     if argument is not None:
-        return argument
+        return _clean_path_argument(argument)
 
     env_value = os.environ.get(OUTPUT_ENV_VAR)
     if env_value:
-        return Path(env_value)
+        return _clean_path_argument(Path(env_value))
 
     config = _read_config(config_path)
     output_dir = config.get("output_dir")
     if isinstance(output_dir, str) and output_dir.strip():
-        return Path(output_dir)
+        return _clean_path_argument(Path(output_dir))
 
     return None
+
+
+def _clean_path_argument(path: Path | None) -> Path | None:
+    if path is None:
+        return None
+    return Path(str(path).strip().rstrip("\"'"))
 
 
 def _read_config(path: Path) -> dict[str, object]:
