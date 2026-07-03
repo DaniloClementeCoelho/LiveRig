@@ -1,17 +1,20 @@
 """User interface for LiveRig."""
 
 from __future__ import annotations
-
+from playlist_view import PlaylistView
 from pathlib import Path
 from typing import Optional
-
+from library_item import LibraryItem
 from  models import Song
 from  reaper_controller import ReaperController
 from  settings import AppSettings
 from  song_manager import SongManager
 from  lyrics_loader import load_lyrics
 from  playback_clock import PlaybackClock
+from drag_controller import DragController
+from drag_preview import DragPreview
 import platform
+import subprocess
 
 
 def print_song_list(songs: list[Song]) -> None:
@@ -52,11 +55,21 @@ class LiveRigApp:
         self.song_manager = SongManager(self.shows_dir)
         self.songs = self.song_manager.load_songs()
         self.filtered_songs = list(self.songs)
-        self.selected_song: Optional[Song] = self.filtered_songs[0] if self.filtered_songs else None
-
+        self.playlist = []
+        self.drag = DragController()
         self.root = ctk.CTk()
         self.root.title("LiveRig")
-        self.root.geometry("1100x760")
+        self.drag_preview = DragPreview(
+            self.root
+        )
+        self.selected_song: Optional[Song] = self.filtered_songs[0] if self.filtered_songs else None
+
+        if platform.system() == "Windows":
+            self.root.state("zoomed")
+        else:
+            self.root.after(800, self._enter_fullscreen)
+
+
         self.root.minsize(900, 620)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
@@ -87,6 +100,25 @@ class LiveRigApp:
 
         self.clock = PlaybackClock(position_file)
 
+        self.root.bind(
+            "<Motion>",
+            self._mouse_move,
+        )
+
+        self.root.bind(
+            "<ButtonRelease-1>",
+            self._mouse_release,
+        )
+
+    def _enter_fullscreen(self):
+        try:
+            subprocess.run([
+                "osascript",
+                "-e",
+                'tell application "System Events" to keystroke "f" using {control down, command down}'
+            ])
+        except Exception:
+            pass
 
 
     def mainloop(self) -> None:
@@ -139,7 +171,8 @@ class LiveRigApp:
     def _build_main_layout(self) -> None:
         self._clear_root()
         self.root.grid_columnconfigure(0, weight=0)
-        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_columnconfigure(1, weight=0)
+        self.root.grid_columnconfigure(2, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
 
         sidebar = self.ctk.CTkFrame(self.root, width=320, corner_radius=0)
@@ -161,8 +194,40 @@ class LiveRigApp:
         self.song_list_frame.grid(row=1, column=0, padx=16, pady=(0, 16), sticky="nsew")
         self.song_list_frame.grid_columnconfigure(0, weight=1)
 
+        playlist = self.ctk.CTkFrame(self.root, width=320, corner_radius=0)
+        playlist.grid(row=0, column=1, sticky="nsew")
+
+        playlist.grid_columnconfigure(0, weight=1)
+        playlist.grid_rowconfigure(1, weight=1)
+
+        playlist_title = self.ctk.CTkLabel(
+            playlist,
+            text="Playlist",
+            font=("Arial", 20, "bold")
+        )
+
+        playlist_title.grid(
+            row=0,
+            column=0,
+            padx=16,
+            pady=(16,8),
+            sticky="ew"
+        )
+
+        self.playlist_frame = PlaylistView(playlist)
+
+        self.playlist_frame.grid(
+            row=1,
+            column=0,
+            padx=16,
+            pady=(0,16),
+            sticky="nsew"
+        )
+
+        self.playlist_frame.grid_columnconfigure(0, weight=1)
+
         content = self.ctk.CTkFrame(self.root, corner_radius=0)
-        content.grid(row=0, column=1, sticky="nsew")
+        content.grid(row=0, column=2, sticky="nsew")
         content.grid_columnconfigure(0, weight=1)
         content.grid_rowconfigure(1, weight=1)
 
@@ -201,6 +266,21 @@ class LiveRigApp:
         controls.grid(row=2, column=0, padx=24, pady=(0, 16), sticky="ew")
         controls.grid_columnconfigure(0, weight=1)
 
+        self.add_playlist_button = self.ctk.CTkButton(
+            controls,
+            text="Adicionar >>",
+            height=42,
+            font=("Arial", 18),
+            command=self._add_selected_to_playlist,
+        )
+
+        self.add_playlist_button.grid(
+            row=0,
+            column=0,
+            pady=(0,10),
+            sticky="ew"
+        )
+
         self.open_and_play_button = self.ctk.CTkButton(
             controls,
             text="▶ TOCAR(do inicio) / Pause",
@@ -208,7 +288,7 @@ class LiveRigApp:
             font=("Arial", 22, "bold"),
             command=self._open_and_play,
         )
-        self.open_and_play_button.grid(row=0, column=0, sticky="ew")
+        self.open_and_play_button.grid(row=1, column=0, sticky="ew")
 
         self.status_label = self.ctk.CTkLabel(content, textvariable=self.status_var, anchor="w")
         self.status_label.grid(row=3, column=0, padx=24, pady=(0, 18), sticky="ew")
@@ -265,27 +345,41 @@ class LiveRigApp:
         return bool(SongManager(shows_dir).load_songs())
 
     def _refresh_song_list(self) -> None:
-        for button in self.song_buttons:
-            button.destroy()
-        self.song_buttons.clear()
+        for child in self.song_list_frame.winfo_children():
+            child.destroy()
 
         for index, song in enumerate(self.filtered_songs):
-            button = self.ctk.CTkButton(
+            item = LibraryItem(
                 self.song_list_frame,
-                text=self._song_button_text(song),
-                height=46,
-                anchor="w",
-                fg_color=self._song_button_color(song),
-                command=lambda item=song: self._select_song(item),
+                song=song,
+                selected=(song == self.selected_song),
+                on_click=self._select_song,
+                on_drag_start=self._start_drag,
             )
-            button.grid(row=index, column=0, pady=(0, 8), sticky="ew")
-            self.song_buttons.append(button)
+
+            item.grid(
+                row=index,
+                column=0,
+                padx=4,
+                pady=4,
+                sticky="ew",
+            )
+
 
     def _on_search_change(self, *_args: object) -> None:
         query = self.search_var.get().strip().lower()
-        self.filtered_songs = [
-            song for song in self.songs if query in song.title.lower() or query in song.artist.lower()
-        ]
+
+        if not query:
+            self.filtered_songs = list(self.songs)
+        else:
+            self.filtered_songs = [
+                song
+                for song in self.songs
+                if query in song.title.lower()
+                or query in (song.artist or "").lower()
+            ]
+
+
         if self.selected_song not in self.filtered_songs:
             self.selected_song = self.filtered_songs[0] if self.filtered_songs else None
         self._refresh_song_list()
@@ -295,6 +389,33 @@ class LiveRigApp:
         self.selected_song = song
         self._refresh_song_list()
         self._show_song(song)
+
+    def _start_drag(self, song: Song):
+        self.drag.start(song)
+
+        x = self.root.winfo_pointerx() - self.root.winfo_rootx()
+        y = self.root.winfo_pointery() - self.root.winfo_rooty()
+
+        self.drag_preview.show(
+            song,
+            x,
+            y,
+        )
+
+    def _add_selected_to_playlist(self):
+        if self.selected_song is None:
+            return
+        self.playlist.append(self.selected_song)
+        self._refresh_playlist()
+
+    def _add_song_to_playlist(self, song):
+        self.playlist.append(song)
+        self._refresh_playlist()
+
+    def _refresh_playlist(self):
+        self.playlist_frame.set_playlist(
+            self.playlist
+        )
 
     def _show_song(self, song: Optional[Song]) -> None:
         if song is None:
@@ -419,3 +540,21 @@ class LiveRigApp:
                 self._set_text(self.lyrics_text, current.text)
 
         self.root.after(100, self._update_lyrics)
+    
+    def _mouse_move(self, event):
+
+        if not self.drag.is_dragging():
+            return
+
+        self.drag_preview.move(
+            event.x,
+            event.y,
+        )
+
+
+    def _mouse_release(self, event):
+
+        if not self.drag.is_dragging():
+            return
+
+        self.drag.stop()
