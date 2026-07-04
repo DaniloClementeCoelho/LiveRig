@@ -1,11 +1,11 @@
 {
     "A LITTLE RESPECT -ERASURE (FIREBIRD).WAV": {
         "artist": "Erasure",
-        "title": "A LITTLE RESPECT"
+        "title": "A little respect"
     },
     "AERIALS.WAV": {
-        "artist": "System os a Down",
-        "title": "AERIALS"
+        "artist": "System of a Down",
+        "title": "Aerials"
     },
     "AFRICA COM REGÊNCIA.WAV": {
         "artist": "Toto",
@@ -16,60 +16,368 @@
         "title": "Alive"
     },
     "ALL THE SMALL THINGS.WAV": {
-        "artist": "Blink-182",
-        "title": "ALL THE SMALL THINGS"
+        "artist": "blink-182",
+        "title": "All the Small Things"
     },
     "ALWAYS ON MY MIND COM REGÊNCIA.WAV": {
-        "artist": "Pet Shop Boys",
-        "title": "ALWAYS ON MY MIND"
+        "artist": "Pet shop boys",
+        "title": "Always on my mind"
     },
     "ANOTHER DAY IN PARADISE COM REGÊNCIA.WAV": {
-        "artist": "Phill Collins",
-        "title": "ANOTHER DAY IN PARADISE"
+        "artist": "Phil Collins",
+        "title": "Another day in paradise"
     },
     "ATÉ QDO ESPERAR-IMPORTED.WAV": {
-        "artist": "Plebe Rude",
+        "artist": "Plebe rude",
         "title": "Até quando esperar"
     },
     "BEHIND BLUE EYES-GLUED.WAV": {
         "artist": "Limp Bisket",
-        "title": "BEHIND BLUE EYES"
+        "title": "Behind Blue Eyes"
     },
     "BIZARRE LOVE TRIANGLE (COM REGÊNCIA) - NEW ORDER (FIREBIRD).WAV": {
-        "artist": "New Order",
-        "title": "BIZARRE LOVE TRIANGLE"
+        "artist": "New order",
+        "title": "Bizarre Love Triangle"
     },
     "BLACK - PEARL JAM (FIREBIRD).WAV": {
         "artist": "Pearl Jam",
-        "title": "BLack"
+        "title": "Black"
     },
     "BLACKNIGHT COM REGÊNCIA.WAV": {
-        "artist": "Deep Purple",
+        "artist": "deep purple",
         "title": "Black Night"
     },
     "BLUE MONDAY CORTADA.WAV": {
-        "artist": "New Order",
-        "title": "BLUE MONDAY"
+        "artist": "New order",
+        "title": "Blue Monday"
+    },
+    "boys dont cry.wav": {
+        "artist": "The Cure",
+        "title": "Boys don´t cry"
+    },
+    "camila.wav": {
+        "artist": "Nenhum de nós",
+        "title": "Camila, Camila"
+    },
+    "chopis centis.wav": {
+        "artist": "Mamonas Assassinas",
+        "title": "Chopis Centis"
+    },
+    "ciume.wav": {
+        "artist": "Ultraje a Rigor",
+        "title": "Ciúme"
+    },
+    "come as you are.wav": {
+        "artist": "Nirvana",
+        "title": "Come as you are"
+    },
+    "CONFORTABLY NUMB - PINK FLOYD (FIREBIRD).wav": {
+        "artist": "Pink Floyd",
+        "title": "Confortable numb"
+    },
+    "CRAZY CORTADA com regência.wav": {
+        "artist": "Seal",
+        "title": "Crazy"
+    },
+    "creep.wav": {
+        "artist": "Radiohead",
+        "title": "Creep"
+    },
+    "dancing with myself.wav": {
+        "artist": "Billy Idol",
+        "title": "Dancing with myself"
+    },
+    "DON_T YOU com intro batera e regência-imported.wav": {
+        "artist": "Simple Minds",
+        "title": "Don´t you forget about me"
+    },
+    "DON_T YOU WANT ME com regência.wav": {
+        "artist": "Human League",
+        "title": "Don´t you want me"
+    },
+    "dont stop dancing.wav": {
+        "artist": "Creed",
+        "title": "Don´t stop dancing"
     },
     "EASY.MP3": {
-        "artist": "Faith no More",
+        "artist": "Faith no more",
         "title": "Easy"
     },
+    "ENJOY THE SILENCE com regência.wav": {
+        "artist": "Depeche Mode",
+        "title": "Enjoy the Silence"
+    },
+    "enter sandman.wav": {
+        "artist": "Metallica",
+        "title": "Enter Sandman"
+    },
+    "envelheco cidade.wav": {
+        "artist": "Ira!",
+        "title": "Envelheço na cidade"
+    },
     "EVERYBODY WANTS COM REGÊNCIA.WAV": {
-        "artist": "tears for fears",
+        "artist": "Tears for Fears",
         "title": "Everybody wants to rule the world"
     },
     "EVERYBREATH YOU TAKE": {
-        "artist": "Police",
-        "title": "Everybreath You Take"
+        "artist": "The Police",
+        "title": "Every breath You Take"
+    },
+    "EYES WITHOUT A FACE com regência.wav": {
+        "artist": "Billy Idol",
+        "title": "Eyes withou a face"
+    },
+    "FOOTLOOSE - KENNY LOGGINS (FIREBIRD).wav": {
+        "artist": "Kenny Loggins",
+        "title": "Footlose"
     },
     "HEAD OVER HEELS - TEARS FOR FEARS (FIREBIRD ) COM BACKING VOCALS (NEW).WAV": {
-        "artist": "Tear for Fears",
+        "artist": "Tears for Fears",
         "title": "Head Over Heels"
     },
+    "I WANT TO BREAK FREE com regência.wav": {
+        "artist": "Queen",
+        "title": "I Want to break free"
+    },
+    "IN BETWEEN DAYS.mp3": {
+        "artist": "The Cure",
+        "title": "In between days"
+    },
+    "IN THE END - LINKIN PARK (FIREBIRD).wav": {
+        "artist": "Linkin Park",
+        "title": "In the End"
+    },
+    "INTO MY LIFE.mp3": {
+        "artist": "Colin Hay",
+        "title": "Into my life"
+    },
+    "ITS MY LIFE - BON JOVI (FIREBIRD).wav": {
+        "artist": "Bon Jovi",
+        "title": "It´s my life"
+    },
+    "JUMP com regência.wav": {
+        "artist": "Van Halen",
+        "title": "Jump"
+    },
+    "JUST CAN_T GET ENOUGH com regência.wav": {
+        "artist": "Depeche Mode",
+        "title": "Just can´t get enought"
+    },
+    "last night.wav": {
+        "artist": "Strokes",
+        "title": "Last night"
+    },
+    "like stone.wav": {
+        "artist": "The Cure",
+        "title": "Like a Stone"
+    },
+    "lonely day.wav": {
+        "artist": "System of a Down",
+        "title": "Lonely day"
+    },
+    "LOSING MY RELIGION - R.E.M. (FIREBIRD).wav": {
+        "artist": "REM",
+        "title": "Losing my religion"
+    },
+    "MAMA I'M COMING IN HOME": {
+        "artist": "Ozzy Osbourne",
+        "title": "Mama I'm coming home"
+    },
+    "MANIAC 1 tom abaixo.wav": {
+        "artist": "Michael Sembello",
+        "title": "Maniac"
+    },
     "ME CHAMA.MP3": {
-        "artist": "Lobao",
+        "artist": "Lobão",
         "title": "me chama"
+    },
+    "MEU ERRO com regência.wav": {
+        "artist": "Paralamas do sucesso",
+        "title": "meu erro"
+    },
+    "MISIRILOU - DICK DALE (FIREBIRD).wav": {
+        "artist": "Dick Dale",
+        "title": "misirilou"
+    },
+    "mulher fases.wav": {
+        "artist": "Raimundos",
+        "title": "Mulher fases"
+    },
+    "my sacrifice.wav": {
+        "artist": "Creed",
+        "title": "My sacrifice"
+    },
+    "NEVER THERE - CAKE (FIREBIRD).wav": {
+        "artist": "Cake",
+        "title": "Never there"
+    },
+    "otherside.wav": {
+        "artist": "Red Hot Chili Peppers",
+        "title": "Otherside"
+    },
+    "OVERKILL - MEN AT WORK (FIREBIRD).wav": {
+        "artist": "Men at Work",
+        "title": "Overkill"
+    },
+    "pretty woman.wav": {
+        "artist": "Roy Robinson",
+        "title": "Pretty Woman"
+    },
+    "PRO DIA NASCER FELIZ - BARÃO VERMELHO (FIREBIRD).wav": {
+        "artist": "Barão vermelho",
+        "title": "Pro dia nascer feliz"
+    },
+    "psycho killer.wav": {
+        "artist": "Talking Heads",
+        "title": "Psycho Killer"
+    },
+    "roadhouse blues.wav": {
+        "artist": "The Doors",
+        "title": "Roadhouse Blues"
+    },
+    "RÁDIO PIRATA NOVO - Versão Tinho.wav": {
+        "artist": "RPM",
+        "title": "Rádio"
+    },
+    "SAVE A PRAYER com regência.wav": {
+        "artist": "Duran Duran",
+        "title": "Save a prayer"
+    },
+    "sera.wav": {
+        "artist": "Legião Urbana",
+        "title": "Sera"
+    },
+    "SILENT MORNING - NOEL (FIREBIRD).wav": {
+        "artist": "Noel",
+        "title": "Silent morning"
+    },
+    "SMOOTH com regência.wav": {
+        "artist": "Santana",
+        "title": "Smooth"
+    },
+    "SOMEBODY TOLD ME - THE KILLERS (FIREBIRD).wav": {
+        "artist": "The Killers",
+        "title": "Somebody told me the"
+    },
+    "STAY - OINGO BOINGO (FIREBIRD).wav": {
+        "artist": "Oingo Boingo",
+        "title": "Stay oingo"
+    },
+    "STRANGELOVE - DEPECHE MODE (FIREBIRD).wav": {
+        "artist": "Depeche Mode",
+        "title": "Strangelove"
+    },
+    "SUEDHEAD - versão Danilo.wav": {
+        "artist": "Morrissey",
+        "title": "Suedhead"
+    },
+    "SULTAINS OF SWING.wav": {
+        "artist": "Dire Straits",
+        "title": "Sultains of swing"
+    },
+    "SUNDAY MORNING.wav": {
+        "artist": "Bolshoi",
+        "title": "sunday Morning"
+    },
+    "suspicious mind.wav": {
+        "artist": "Elvis Presley",
+        "title": "Suspicious Mind"
+    },
+    "SWEET DREAMS - EURYTHMICS (FIREBIRD).wav": {
+        "artist": "Eurythmics",
+        "title": "Sweet dreams"
+    },
+    "SYMPHONY OF DESTRUCTION intro + click.wav": {
+        "artist": "Megadeth",
+        "title": "Symphony of destruction"
+    },
+    "TAINTED LOVE com regência.wav": {
+        "artist": "Soft Cell",
+        "title": "tainted Love"
+    },
+    "take me out.wav": {
+        "artist": "Franz Ferdinan",
+        "title": "Take me out"
+    },
+    "TAKE ON ME - A-HA (FIREBIRD).wav": {
+        "artist": "A-há",
+        "title": "Take on me"
+    },
+    "TARZAN BOY ‐ BALTIMORA (FIREBIRD).wav": {
+        "artist": "Baltimora",
+        "title": "Tarzan boy"
+    },
+    "tempo perdido.wav": {
+        "artist": "Legião Urbana",
+        "title": "Tempo Perdido"
+    },
+    "THE HEAT IS ON - GLENN FREY (FIREBIRD).wav": {
+        "artist": "Glenn Frey",
+        "title": "The heat is on"
+    },
+    "the one I love.wav": {
+        "artist": "REM",
+        "title": "The one I love"
+    },
+    "THE PROMISE - WHEN IN ROME (FIREBIRD).wav": {
+        "artist": "When in Rome",
+        "title": "The promise"
+    },
+    "THE WALL - PINK FLOYD (FIREBIRD).wav": {
+        "artist": "Pink Floyd",
+        "title": "The wall"
+    },
+    "THERE IS A LIGHT  THAT NEVER GOES OUT com regência.wav": {
+        "artist": "Smiths",
+        "title": "There is a light that never goes out"
+    },
+    "toda forma amor.wav": {
+        "artist": "Lulu Santos",
+        "title": "Toda on forma amor"
+    },
+    "TOM SAWYER karaoke version.wav": {
+        "artist": "Rush",
+        "title": "tom Sawyer"
+    },
+    "UNDER PRESSURE - QUEEN (FIREBIRD).wav": {
+        "artist": "Queen",
+        "title": "Under pressure"
+    },
+    "USE SOMEBODY - KINGS OF LEON (FIREBIRD).wav": {
+        "artist": "Kings of Leon",
+        "title": "Use somebody "
+    },
+    "vamos fugir.wav": {
+        "artist": "Skank",
+        "title": "Vamos Fugir"
+    },
+    "WALK OF LIFE com regência.wav": {
+        "artist": "Dire Straits",
+        "title": "Walk  life"
+    },
+    "WAR PIGS-imported.wav": {
+        "artist": "Black Sabbath",
+        "title": "war Pigs"
+    },
+    "WHATS ON YOUR MIND - INFORMATION SOCIETY (FIREBIRD).wav": {
+        "artist": "Information Society",
+        "title": "Whats on your mind"
+    },
+    "wherever you will go.wav": {
+        "artist": "The Calling",
+        "title": "Wherever on you will"
+    },
+    "wicked game.wav": {
+        "artist": "HIM",
+        "title": "Wicked Game"
+    },
+    "WITH OR WITHOUT YOU.mp3": {
+        "artist": "U2",
+        "title": "With or without you"
+    },
+    "wonderfull world.wav": {
+        "artist": "Ramones",
+        "title": "Wonderfull World"
     },
     "WONDERWALL - OASIS (FIREBIRD).WAV": {
         "artist": "Oasis",
