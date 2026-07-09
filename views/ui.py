@@ -12,6 +12,7 @@ from playback_clock import PlaybackClock
 from reaper_controller import ReaperController
 from settings import AppSettings
 from song_manager import SongManager
+import json
 
 
 def print_song_list(songs: list[Song]) -> None:
@@ -187,7 +188,10 @@ class LiveRigApp:
 
         toolbar = self.ctk.CTkFrame(player_shell, corner_radius=0)
         toolbar.grid(row=0, column=0, padx=24, pady=(12, 0), sticky="ew")
-        toolbar.grid_columnconfigure(1, weight=1)
+        toolbar.grid_columnconfigure(0, weight=0)
+        toolbar.grid_columnconfigure(1, weight=0)
+        toolbar.grid_columnconfigure(2, weight=0)
+        toolbar.grid_columnconfigure(3, weight=1)
 
         self.toggle_library_button = self.ctk.CTkButton(
             toolbar,
@@ -195,7 +199,7 @@ class LiveRigApp:
             width=160,
             command=self._toggle_library,
         )
-        self.toggle_library_button.grid(row=0, column=0, sticky="w")
+        self.toggle_library_button.grid(row=0, column=0, padx=(0,10), sticky="w")
 
         self.player_view = self.PlayerView(
             player_shell,
@@ -204,6 +208,22 @@ class LiveRigApp:
             on_pause=self._pause,
         )
         self.player_view.grid(row=1, column=0, sticky="nsew")
+
+        self.save_playlist_button = self.ctk.CTkButton(
+            toolbar,
+            text="Salvar",
+            width=140,
+            command=self._save_playlist,
+        )
+        self.save_playlist_button.grid(row=0, column=1, padx=(0,10), sticky="w")
+
+        self.load_playlist_button = self.ctk.CTkButton(
+            toolbar,
+            text="Abrir",
+            width=140,
+            command=self._load_playlist,
+        )
+        self.load_playlist_button.grid(row=0, column=2, sticky="w")
 
     def _clear_root(self) -> None:
         for child in self.root.winfo_children():
@@ -426,3 +446,70 @@ class LiveRigApp:
             self.reaper.shutdown()
         finally:
             self.root.destroy()
+
+    def _save_playlist(self) -> None:
+        filename = self.filedialog.asksaveasfilename(
+            title="Salvar Playlist",
+            defaultextension=".json",
+            filetypes=[
+                ("Playlist LiveRig", "*.json"),
+                ("Todos os arquivos", "*.*"),
+            ],
+        )
+
+        if not filename:
+            return
+
+        songs = []
+
+        for song in self.playlist_view.items():
+            songs.append(str(song.folder.relative_to(self.shows_dir)))
+
+        data = {
+            "version": 1,
+            "songs": songs,
+        }
+
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+
+        self.status_var.set("Playlist salva com sucesso.")
+
+    def _load_playlist(self) -> None:
+        filename = self.filedialog.askopenfilename(
+            title="Abrir Playlist",
+            filetypes=[
+                ("Playlist LiveRig", "*.json"),
+                ("Todos os arquivos", "*.*"),
+            ],
+        )
+
+        if not filename:
+            return
+
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:
+            self.status_var.set(f"Erro ao abrir playlist: {e}")
+            return
+
+        # Índice das músicas disponíveis
+        songs_by_folder = {
+            str(song.folder.relative_to(self.shows_dir)): song
+            for song in self.songs
+        }
+
+        playlist = []
+
+        for folder in data.get("songs", []):
+            song = songs_by_folder.get(folder)
+            if song is not None:
+                playlist.append(song)
+
+        self.playlist_view.set_playlist(playlist)
+
+        if playlist:
+            self._select_song(playlist[0])
+
+        self.status_var.set(f"Playlist carregada ({len(playlist)} músicas)")
