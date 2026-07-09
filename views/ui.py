@@ -101,6 +101,9 @@ class LiveRigApp:
         self.playlist_view = None
         self.player_view = None
 
+        self.root.bind_all("<space>", self._handle_space_pause, add="+")
+        self.root.bind_all("<KeyPress-space>", self._handle_space_pause, add="+")
+
         self.clock = PlaybackClock(self._position_file())
         self.root.bind("<Motion>", self._mouse_move)
         self.root.bind("<ButtonRelease-1>", self._mouse_release)
@@ -513,3 +516,14 @@ class LiveRigApp:
             self._select_song(playlist[0])
 
         self.status_var.set(f"Playlist carregada ({len(playlist)} músicas)")
+
+    def _handle_space_pause(self, event: object) -> str | None:
+        widget = self.root.focus_get()
+        # Evita interferir quando o foco estiver em um campo editável
+        if widget is not None:
+            widget_class = widget.winfo_class()
+            if widget_class in {"Entry", "Text"}:
+                return None
+
+        self._pause()
+        return "break"
