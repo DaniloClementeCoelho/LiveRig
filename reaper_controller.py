@@ -15,6 +15,8 @@ from  models import Song
 from osc_transport import OSCTransport
 from playback_clock import PlaybackClock
 from pathlib import Path
+from resource_path import resource_path
+
 
 ProjectLauncher = Callable[[Path], Optional[subprocess.Popen]]
 ReaperLauncher = Callable[[], Optional[subprocess.Popen]]
@@ -504,7 +506,11 @@ class ReaperController:
         reaper_scripts.mkdir(parents=True, exist_ok=True)
 
         # Script distribuído com o LiveRig
-        source = Path(__file__).resolve().parent / "assets" / "LiveRigPosition.lua"
+
+        source = resource_path(
+            "assets",
+            "LiveRigPosition.lua"
+        )
 
         if not source.exists():
             raise FileNotFoundError(f"Script não encontrado: {source}")

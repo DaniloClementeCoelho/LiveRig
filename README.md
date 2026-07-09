@@ -1,34 +1,40 @@
 # LiveRig
 
-Aplicativo desktop para conduzir shows ao vivo com [REAPER](https://www.reaper.fm/). Organiza uma biblioteca de músicas, monta a playlist do set e controla reprodução, letras sincronizadas e projetos `.RPP` a partir de uma interface gráfica.
+Aplicativo desktop para conduzir shows ao vivo com o REAPER. Organiza uma biblioteca de músicas, monta playlists, controla reprodução, exibe letras sincronizadas e abre projetos `.RPP` a partir de uma interface gráfica.
 
-## Requisitos
+---
 
-- **Python** 3.10 ou superior
-- **REAPER** instalado (Windows ou macOS)
-- Dependências Python listadas em `requirements.txt`
+# Requisitos para desenvolvimento
 
-## Instalação
+- Python 3.10 ou superior
+- REAPER instalado
+- Dependências listadas em `requirements.txt`
 
-Clone o repositório e crie o ambiente virtual na raiz do projeto:
+---
+
+# Instalação
+
+## Windows
 
 ```powershell
-# Windows (PowerShell)
 cd LiveRig
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
+## macOS / Linux
+
 ```bash
-# macOS / Linux
 cd LiveRig
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Executar
+---
+
+# Executar
 
 Com o ambiente virtual ativo:
 
@@ -36,102 +42,225 @@ Com o ambiente virtual ativo:
 python main.py
 ```
 
-Na primeira execução, escolha a pasta **shows** que contém as músicas do set. A preferência fica salva em `settings.json`.
+Na primeira execução, escolha a pasta **shows** que contém as músicas do seu set.
 
+As preferências do usuário são armazenadas automaticamente na área de dados do sistema operacional.
 
+No Windows:
 
+```text
+%APPDATA%\LiveRig\
+```
 
+Estrutura criada automaticamente:
 
+```text
+LiveRig
+├── settings.json
+├── logs/
+├── runtime/
+└── shows/
+```
 
-## Importar projetos do REAPER
+Essa separação permite atualizar o programa sem perder configurações, playlists ou dados do usuário.
 
-O `LiveRigImporter` prepara arquivos `.rpp` para o formato lido pelo LiveRig.
-A pasta de saida nao e fixa: configure por argumento, variavel de ambiente ou arquivo local.
+---
+
+# Distribuição para Windows
+
+O projeto está preparado para ser empacotado utilizando o PyInstaller.
+
+## Gerar o executável
+
+```powershell
+pyinstaller LiveRig.spec
+```
+
+Será criada a estrutura:
+
+```text
+dist/
+└── LiveRig/
+    ├── LiveRig.exe
+    └── _internal/
+```
+
+O executável já contém:
+
+- Interpretador Python
+- Dependências Python
+- Bibliotecas necessárias
+- Script `LiveRigPosition.lua`
+
+Não é necessário instalar Python na máquina onde o LiveRig será executado.
+
+---
+
+# Recursos da aplicação
+
+Arquivos distribuídos juntamente com o executável (como o script Lua utilizado pelo REAPER) são acessados através do utilitário `resource_path.py`.
+
+Isso garante compatibilidade entre:
+
+- execução durante o desenvolvimento;
+- executável gerado pelo PyInstaller.
+
+---
+
+# Importar projetos do REAPER
+
+O `LiveRigImporter` prepara arquivos `.rpp` para o formato utilizado pelo LiveRig.
+
+A pasta de saída pode ser definida por:
+
+- argumento de linha de comando;
+- variável de ambiente;
+- arquivo de configuração local.
+
+Exemplo:
 
 ```powershell
 python -m LiveRigImporter.main caminho\musica.rpp --output caminho\da\saida
 ```
 
-Ou crie `LiveRigImporter/config.local.json`:
+Ou utilizando `LiveRigImporter/config.local.json`:
 
 ```json
 {
-  "output_dir": "D:/Projetos AI/LiveRig/shows"
+    "output_dir": "D:/Projetos AI/LiveRig/shows"
 }
 ```
 
-Tambem e possivel usar a variavel `LIVERIG_IMPORTER_OUTPUT_DIR`.
+Também é possível utilizar a variável:
 
-## Cursor / VS Code
-
-O projeto inclui `.vscode/settings.json` para usar o interpretador do `.venv` e ativar o ambiente automaticamente em terminais novos.
-
-No **macOS**, ajuste o caminho do interpretador se necessário:
-
-- Windows: `.venv/Scripts/python.exe`
-- macOS/Linux: `.venv/bin/python`
-
-## Estrutura de uma música
-
-Cada música fica em uma subpasta dentro de `shows/`, com um `config.json` apontando para os arquivos do pacote:
-
+```text
+LIVERIG_IMPORTER_OUTPUT_DIR
 ```
+
+---
+
+# Cursor / VS Code
+
+O projeto inclui configurações para utilizar automaticamente o ambiente virtual.
+
+Caso necessário, configure o interpretador:
+
+Windows
+
+```text
+.venv/Scripts/python.exe
+```
+
+macOS / Linux
+
+```text
+.venv/bin/python
+```
+
+---
+
+# Estrutura de uma música
+
+Cada música fica em uma subpasta dentro de `shows`.
+
+Exemplo:
+
+```text
 shows/
-└── Minha Musica/
+└── Minha Música/
     ├── config.json
     ├── projeto.RPP
-    ├── letra.lrc          # opcional
-    ├── notas.txt          # opcional
-    └── capa.jpg           # opcional
+    ├── letra.lrc
+    ├── notas.txt
+    └── capa.jpg
 ```
 
 Exemplo de `config.json`:
 
 ```json
 {
-  "title": "Minha Música",
-  "artist": "Artista",
-  "project": "projeto.RPP",
-  "lyrics": "letra.lrc",
-  "notes": "notas.txt",
-  "cover": "capa.jpg",
-  "bpm": 120,
-  "tuning": "EADGBE",
-  "patch": 1
+    "title": "Minha Música",
+    "artist": "Artista",
+    "project": "projeto.RPP",
+    "lyrics": "letra.lrc",
+    "notes": "notas.txt",
+    "cover": "capa.jpg",
+    "bpm": 120,
+    "tuning": "EADGBE",
+    "patch": 1
 }
 ```
 
-O campo `project` é obrigatório. Os demais são opcionais.
+O campo `project` é obrigatório.
 
-## Funcionalidades
+Todos os demais são opcionais.
 
-- **Biblioteca** — lista todas as músicas da pasta shows, com busca instantânea
-- **Playlist** — monte o set arrastando músicas da biblioteca; reordene com drag and drop
-- **Player** — abre o projeto no REAPER, play/pause e exibe metadados, notas e letras
-- **Letras sincronizadas** — acompanha a posição de reprodução via script Lua instalado no REAPER
-- **Integração REAPER** — lança o REAPER, carrega projetos e envia ações (Windows nativo; macOS via OSC)
+---
 
-## Arquitetura
+# Funcionalidades
 
-```
+- Biblioteca de músicas
+- Busca instantânea
+- Playlist com drag-and-drop
+- Reprodução integrada ao REAPER
+- Letras sincronizadas
+- Notas da música
+- Exibição de capa
+- Comunicação com REAPER
+- Integração OSC (macOS)
+
+---
+
+# Arquitetura
+
+```text
 LiveRig/
-├── main.py                 # ponto de entrada
-├── reaper_controller.py    # comunicação com o REAPER
-├── song_manager.py         # leitura dos pacotes de música
-├── playback_clock.py       # posição de reprodução
-├── views/                  # telas (biblioteca, playlist, player)
-├── widgets/                # componentes reutilizáveis da UI
-├── controllers/            # lógica de drag and drop
-└── assets/                 # script Lua (LiveRigPosition.lua)
+├── main.py
+├── config.py
+├── resource_path.py
+├── LiveRig.spec
+├── reaper_controller.py
+├── song_manager.py
+├── playback_clock.py
+├── controllers/
+├── views/
+├── widgets/
+├── assets/
+│   └── LiveRigPosition.lua
+└── LiveRigImporter/
 ```
 
-## Dependências
+---
 
-| Pacote        | Uso                          |
-|---------------|------------------------------|
-| customtkinter | interface gráfica            |
-| python-osc    | comunicação OSC (macOS)      |
+# Dependências
 
-## Licença
+| Pacote | Finalidade |
+|---------|------------|
+| customtkinter | Interface gráfica |
+| python-osc | Comunicação OSC |
 
-Uso interno / projeto pessoal. Consulte o autor antes de redistribuir.
+---
+
+# Roadmap
+
+## Em andamento
+
+- Empacotamento com PyInstaller
+- Instalador Windows
+- Automatização do processo de build
+
+## Próximos passos
+
+- `build.py` para geração automática
+- Instalador Inno Setup
+- Versionamento automático
+- Atualizador automático
+- GitHub Releases
+
+---
+
+# Licença
+
+Uso interno / projeto pessoal.
+
+Consulte o autor antes de redistribuir.
