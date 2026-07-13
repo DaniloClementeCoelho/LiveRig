@@ -103,7 +103,8 @@ class LiveRigApp:
 
         self.root.bind_all("<space>", self._handle_space_pause, add="+")
         self.root.bind_all("<KeyPress-space>", self._handle_space_pause, add="+")
-
+        self.root.bind_all("<Down>", self._handle_down_scroll, add="+")
+        self.root.bind_all("<Up>", self._handle_up_scroll, add="+")
         self.clock = PlaybackClock(self._position_file())
         self.root.bind("<Motion>", self._mouse_move)
         self.root.bind("<ButtonRelease-1>", self._mouse_release)
@@ -526,4 +527,14 @@ class LiveRigApp:
                 return None
 
         self._pause()
+        return "break"
+
+    def _handle_down_scroll(self, event=None):
+        if self.player_view is not None:
+            self.player_view.lyrics_text.yview_scroll(1, "units")
+        return "break"
+
+    def _handle_up_scroll(self, event=None):
+        if self.player_view is not None:
+            self.player_view.lyrics_text.yview_scroll(-1, "units")
         return "break"
