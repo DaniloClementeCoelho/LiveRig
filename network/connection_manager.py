@@ -6,9 +6,6 @@ from playback.playback_state import PlaybackState
 
 
 class ConnectionManager:
-    """
-    Gerencia todas as conexões WebSocket do LiveRig.
-    """
 
     def __init__(self, playback_state: PlaybackState) -> None:
 

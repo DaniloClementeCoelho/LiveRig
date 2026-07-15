@@ -3,12 +3,13 @@ from __future__ import annotations
 import logging
 import threading
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from .connection_manager import ConnectionManager
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
+
+from network.connection_manager import ConnectionManager
+from playback.playback_state import PlaybackState
 
 
 logger = logging.getLogger(__name__)
@@ -36,23 +37,33 @@ class HttpServer:
             docs_url=None,
             redoc_url=None,
         )
-        self._connections = ConnectionManager()
-        web_folder = Path(__file__).resolve().parent.parent / "web"
+
+        self._playback_state = PlaybackState()
+
+        self._connections = ConnectionManager(
+            self._playback_state
+        )
 
         @self._app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket):
+
             await self._connections.connect(websocket)
+
             try:
                 while True:
                     await websocket.receive_text()
+
             except WebSocketDisconnect:
                 self._connections.disconnect(websocket)
 
-
+        web_folder = Path(__file__).resolve().parent.parent / "web"
 
         self._app.mount(
             "/",
-            StaticFiles(directory=web_folder, html=True),
+            StaticFiles(
+                directory=web_folder,
+                html=True,
+            ),
             name="web",
         )
 
@@ -95,7 +106,9 @@ class HttpServer:
 
         except Exception:
 
-            logger.exception("Falha ao iniciar HTTP Server")
+            logger.exception(
+                "Falha ao iniciar HTTP Server"
+            )
 
             self._thread = None
             self._server = None

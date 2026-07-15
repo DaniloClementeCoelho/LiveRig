@@ -4,46 +4,83 @@
 <head>
     <meta charset="UTF-8">
     <title>LiveRig Visual Sync</title>
+
+    <style>
+
+        body{
+            font-family:Arial,Helvetica,sans-serif;
+            margin:40px;
+        }
+
+        h1{
+            margin-bottom:30px;
+        }
+
+        .ok{
+            color:green;
+            font-weight:bold;
+        }
+
+        pre{
+            background:#f4f4f4;
+            padding:15px;
+            border-radius:8px;
+        }
+
+    </style>
+
 </head>
 
 <body>
 
-    <h1>LiveRig Visual Sync</h1>
+<h1>LiveRig Visual Sync</h1>
 
-    <div id="status">
-        Conectando...
-    </div>
+<div id="status">
+Conectando...
+</div>
 
-    <script>
+<pre id="state"></pre>
 
-        const status = document.getElementById("status");
+<script>
 
-        const ws = new WebSocket("ws://" + location.host + "/ws");
+const status = document.getElementById("status");
+const state = document.getElementById("state");
 
-        ws.onopen = () => {
-            status.innerHTML = "🟡 Conectado...";
-        };
+const ws = new WebSocket("ws://" + location.host + "/ws");
 
-        ws.onmessage = (event) => {
+ws.onopen = () => {
 
-            const message = JSON.parse(event.data);
+    status.innerHTML = "🟡 Conectado...";
 
-            status.innerHTML =
-                "🟢 " + message.type +
-                "<br>Protocol: " + message.protocol +
-                "<br>Client ID: " + message.client_id;
+};
 
-        };
+ws.onmessage = (event) => {
 
-        ws.onclose = () => {
-            status.innerHTML = "🔴 WebSocket desconectado";
-        };
+    const message = JSON.parse(event.data);
 
-        ws.onerror = () => {
-            status.innerHTML = "Erro na conexão";
-        };
+    if(message.type === "playback_state")
+    {
+        status.innerHTML = "<span class='ok'>🟢 PlaybackState recebido</span>";
 
-    </script>
+        state.textContent =
+            JSON.stringify(message.payload, null, 4);
+    }
+
+};
+
+ws.onclose = () => {
+
+    status.innerHTML = "🔴 WebSocket desconectado";
+
+};
+
+ws.onerror = () => {
+
+    status.innerHTML = "Erro na conexão";
+
+};
+
+</script>
 
 </body>
 
