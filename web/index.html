@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>LiveRig Visual Sync</title>
+</head>
+
+<body>
+
+    <h1>LiveRig Visual Sync</h1>
+
+    <div id="status">
+        Conectando...
+    </div>
+
+    <script>
+
+        const status = document.getElementById("status");
+
+        const ws = new WebSocket("ws://" + location.host + "/ws");
+
+        ws.onopen = () => {
+            status.innerHTML = "🟡 Conectado...";
+        };
+
+        ws.onmessage = (event) => {
+
+            const message = JSON.parse(event.data);
+
+            status.innerHTML =
+                "🟢 " + message.type +
+                "<br>Protocol: " + message.protocol +
+                "<br>Client ID: " + message.client_id;
+
+        };
+
+        ws.onclose = () => {
+            status.innerHTML = "🔴 WebSocket desconectado";
+        };
+
+        ws.onerror = () => {
+            status.innerHTML = "Erro na conexão";
+        };
+
+    </script>
+
+</body>
+
+</html>

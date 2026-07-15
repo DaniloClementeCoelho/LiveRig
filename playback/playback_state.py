@@ -1,28 +1,54 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Optional
 
-from models import Song
-
-
-@dataclass
 class PlaybackState:
     """
-    Estado global do show.
+    Representa o estado atual do show.
 
-    Esta classe será a única fonte de verdade do estado de reprodução
-    do LiveRig.
+    Esta é a única fonte de verdade do LiveRig.
 
-    Nesta primeira fase ela é apenas um objeto de dados.
+    Nenhum módulo deve manter uma cópia dessas informações.
     """
 
-    current_song: Optional[Song] = None
+    def __init__(self) -> None:
 
-    position: float = 0.0
+        self._playing = False
+        self._current_song: str | None = None
+        self._position = 0.0
 
-    playing: bool = False
+    @property
+    def playing(self) -> bool:
+        return self._playing
 
-    current_region: Optional[str] = None
+    @playing.setter
+    def playing(self, value: bool) -> None:
+        self._playing = value
 
-    current_marker: Optional[str] = None
+    @property
+    def current_song(self) -> str | None:
+        return self._current_song
+
+    @current_song.setter
+    def current_song(self, value: str | None) -> None:
+        self._current_song = value
+
+    @property
+    def position(self) -> float:
+        return self._position
+
+    @position.setter
+    def position(self, value: float) -> None:
+        self._position = float(value)
+
+    def reset(self) -> None:
+        self._playing = False
+        self._current_song = None
+        self._position = 0.0
+
+    def to_dict(self) -> dict:
+
+        return {
+            "playing": self._playing,
+            "current_song": self._current_song,
+            "position": self._position,
+        }
