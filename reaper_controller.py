@@ -254,6 +254,19 @@ class ReaperController:
         """Return whether playback is marked as active."""
         return self._playing
 
+    def playback_position(self) -> float:
+        """Posição atual do playback."""
+        return self._clock.position()
+
+    def playback_is_playing(self) -> bool:
+        """Estado real do playback."""
+        return self._clock.is_playing()
+
+    def playback_ready(self) -> bool:
+        """Projeto pronto para leitura."""
+        return self._clock.project_ready()
+
+
     def is_running(self) -> bool:
         """Return whether the REAPER process started by LiveRig is still running."""
         return self._process is not None and self._process.poll() is None

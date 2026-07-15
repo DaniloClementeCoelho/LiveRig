@@ -10,7 +10,7 @@ def main() -> None:
     settings = AppSettings()
     reaper = ReaperController()
 
-    visual_sync = VisualSyncManager()
+    visual_sync = VisualSyncManager(reaper)
 
     try:
         visual_sync.start()
