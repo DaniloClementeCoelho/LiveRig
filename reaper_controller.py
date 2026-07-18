@@ -11,7 +11,7 @@ from collections.abc import Callable
 from typing import Optional
 from pathlib import Path
 import shutil
-from  models import Song
+from models import Song
 from osc_transport import OSCTransport
 from playback_clock import PlaybackClock
 from pathlib import Path
@@ -288,7 +288,7 @@ class ReaperController:
 
 
     def _wait_until_project_loaded(self):
-        deadline = time.time() + 5
+        deadline = time.time() + 20
 
         while time.time() < deadline:
             if self._clock.project_ready():

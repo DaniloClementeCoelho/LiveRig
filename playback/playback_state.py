@@ -6,7 +6,8 @@ class PlaybackState:
     def __init__(self) -> None:
 
         self.playing = False
-        self.current_song: str | None = None
+        self.current_song_id: str | None = None
+        self.current_song_title: str | None = None
         self.position = 0.0
 
         self._version = 0
@@ -33,12 +34,20 @@ class PlaybackState:
 
         return True
 
-    def set_current_song(self, song: str | None) -> bool:
+    def set_current_song(
+        self,
+        song_id: str | None,
+        song_title: str | None,
+    ) -> bool:
 
-        if self.current_song == song:
+        if (
+            self.current_song_id == song_id
+            and self.current_song_title == song_title
+        ):
             return False
 
-        self.current_song = song
+        self.current_song_id = song_id
+        self.current_song_title = song_title
         self._version += 1
 
         return True
@@ -51,7 +60,9 @@ class PlaybackState:
 
         return {
             "playing": self.playing,
-            "current_song": self.current_song,
+            "current_song": self.current_song_title,
+            "current_song_id": self.current_song_id,
+            "current_song_title": self.current_song_title,
             "position": self.position,
             "version": self._version,
         }

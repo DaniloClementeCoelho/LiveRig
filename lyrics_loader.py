@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from  lyrics import LyricItem, LyricsTimeline
+from lyrics import LyricItem, LyricsTimeline
 
 
 def load_lyrics(project_path: Path) -> LyricsTimeline:

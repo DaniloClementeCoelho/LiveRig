@@ -1,0 +1,6 @@
+quero começar a desenvolver um software para tocar VSs ao vivo para minha banda. quero chama-lo de VS_LiveTool.
+ele vai rodar em Windows e precisa ter as seguintes funcionalidades:
+
+1) antes de iniciar, abre uma interface gráfica que pergunte ao usuário onde esta a pasta com os arquivos necessários. são eles: um arquivo mp3 ou wav e um json contendo o nome da musica, e algumas observações e anotações a respeito.
+2) tendo isso, precisa abrir a interface do programa em si. ela deve listar todas as musicas encontradas na tela para o usuário ver. Tocar um arquivo estéreo .mp3 ou .wav. Os arquivos tem a seguinte configuração: Lado esquerdo é o click e orquestração narrada. Lado direito teclados e sintetizadores.
+3) Mandar comandos midi pra controlar minha pedaleira de guitarra. a idéia é que 

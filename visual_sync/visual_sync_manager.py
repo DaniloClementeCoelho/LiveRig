@@ -5,6 +5,7 @@ import time
 
 from network import NetworkServer
 from reaper_controller import ReaperController
+from models import Song
 
 
 class VisualSyncManager:
@@ -42,7 +43,7 @@ class VisualSyncManager:
 
     def _worker(self) -> None:
 
-        playback = self._network._http_server.playback_state
+        playback = self._network.playback_state
 
         while self._running:
 
@@ -64,12 +65,18 @@ class VisualSyncManager:
 
             song = self._reaper.current_project()
 
-            song_name = None if song is None else song.title
+            song_id = None if song is None else self._song_id(song)
+            song_title = None if song is None else song.title
+            if song is not None and song_id is not None:
+                self._network.register_song(song_id, song)
 
-            if playback.set_current_song(song_name):
+            if playback.set_current_song(song_id, song_title):
                 changed = True
 
             if changed:
-                self._network._http_server.notify_playback_changed()
+                self._network.notify_playback_changed()
 
             time.sleep(0.05)
+
+    def _song_id(self, song: Song) -> str:
+        return song.folder.name

@@ -8,7 +8,7 @@ APP_NAME = "LiveRig"
 #
 # Diretório da aplicação (somente leitura)
 #
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 #
 # Diretório dos dados do usuário

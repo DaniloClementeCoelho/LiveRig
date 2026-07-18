@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Optional
 
-from  models import Song
+from models import Song
 
 
 class SongManager:

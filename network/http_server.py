@@ -4,11 +4,15 @@ import asyncio
 import logging
 import threading
 from pathlib import Path
+from urllib.parse import quote
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from lyrics_loader import load_lyrics
+from models import Song
 from network.connection_manager import ConnectionManager
 from playback.playback_state import PlaybackState
 
@@ -34,6 +38,8 @@ class HttpServer:
         self._running = False
 
         self._loop: asyncio.AbstractEventLoop | None = None
+        self._songs: dict[str, Song] = {}
+        self._songs_lock = threading.Lock()
 
         self._app = FastAPI(
             title="LiveRig Visual Sync",
@@ -66,7 +72,44 @@ class HttpServer:
 
                 self._connections.disconnect(websocket)
 
+        @self._app.get("/api/playback")
+        async def playback_endpoint():
+
+            return self._playback_state.to_dict()
+
+        @self._app.get("/api/songs/{song_id}/sync")
+        async def song_sync_endpoint(song_id: str):
+
+            payload = self.song_sync_payload(song_id)
+            if payload is None:
+                raise HTTPException(status_code=404, detail="Musica nao encontrada.")
+
+            return payload
+
         web_folder = Path(__file__).resolve().parent.parent / "web"
+
+        @self._app.get("/video")
+        async def video_endpoint():
+
+            return FileResponse(web_folder / "video.html")
+
+        @self._app.get("/pano_de_fundo.jpg")
+        async def video_background_endpoint():
+
+            background = web_folder.parent / "pano_de_fundo.jpg"
+            if not background.exists() or not background.is_file():
+                raise HTTPException(status_code=404, detail="Pano de fundo nao encontrado.")
+
+            return FileResponse(background)
+
+        @self._app.get("/api/songs/{song_id}/media/{media_path:path}")
+        async def song_media_endpoint(song_id: str, media_path: str):
+
+            path = self.song_media_path(song_id, media_path)
+            if path is None:
+                raise HTTPException(status_code=404, detail="Midia nao encontrada.")
+
+            return FileResponse(path)
 
         self._app.mount(
             "/",
@@ -84,6 +127,93 @@ class HttpServer:
     @property
     def playback_state(self) -> PlaybackState:
         return self._playback_state
+
+    def register_song(self, song_id: str, song: Song) -> None:
+
+        with self._songs_lock:
+            self._songs[song_id] = song
+
+    def song_sync_payload(self, song_id: str) -> dict | None:
+
+        with self._songs_lock:
+            song = self._songs.get(song_id)
+
+        if song is None:
+            return None
+
+        lyrics_timeline = load_lyrics(song.project_path)
+
+        return {
+            "id": song_id,
+            "title": song.title,
+            "artist": song.artist,
+            "bpm": song.bpm,
+            "patch": song.patch,
+            "tuning": song.tuning,
+            "duration": song.duration,
+            "notes": song.notes,
+            "lyrics": [
+                {
+                    "index": item.index,
+                    "start": item.start,
+                    "end": item.end,
+                    "text": item.text,
+                }
+                for item in lyrics_timeline.items
+            ],
+            "videos": self._videos(song_id, song),
+        }
+
+    def song_media_path(self, song_id: str, media_path: str) -> Path | None:
+
+        with self._songs_lock:
+            song = self._songs.get(song_id)
+
+        if song is None:
+            return None
+
+        requested = Path(media_path)
+        if requested.is_absolute():
+            return None
+
+        root = song.folder.resolve()
+        path = (root / requested).resolve()
+        if not path.is_relative_to(root):
+            return None
+
+        if not path.exists() or not path.is_file():
+            return None
+
+        return path
+
+    def _videos(self, song_id: str, song: Song) -> list[dict]:
+
+        if song.extra is None:
+            return []
+
+        videos = song.extra.get("videos")
+        if not isinstance(videos, list):
+            return []
+
+        payload = []
+
+        for video in videos:
+            if not isinstance(video, dict):
+                continue
+
+            media_path = video.get("file")
+            if not isinstance(media_path, str) or not media_path.strip():
+                continue
+
+            item = dict(video)
+            normalized_path = media_path.strip().replace("\\", "/")
+            item["src"] = (
+                f"/api/songs/{quote(song_id)}/media/"
+                f"{quote(normalized_path, safe='/')}"
+            )
+            payload.append(item)
+
+        return payload
 
     def notify_playback_changed(self) -> None:
 
