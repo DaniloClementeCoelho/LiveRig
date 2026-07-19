@@ -209,10 +209,31 @@ class HttpServer:
 
         return {
             "mode": config.get("mode") if config.get("mode") == "manual" else "auto",
+            "manifest": self._visual_manifest(song_id, song, config),
             "media_folder": media_folder,
             "shuffle_interval": shuffle_interval,
             "media": self._auto_media(song_id, song, media_folder),
             "cues": self._visual_cues(song_id, song),
+        }
+
+    def _visual_manifest(
+        self,
+        song_id: str,
+        song: Song,
+        config: dict,
+    ) -> dict | None:
+
+        manifest = config.get("manifest")
+        if not isinstance(manifest, str) or not manifest.strip():
+            return None
+
+        normalized_path = manifest.strip().replace("\\", "/")
+        if self.song_media_path(song_id, normalized_path) is None:
+            return None
+
+        return {
+            "file": normalized_path,
+            "src": self._media_src(song_id, normalized_path),
         }
 
     def _auto_media(

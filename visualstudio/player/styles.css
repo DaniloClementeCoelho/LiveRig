@@ -1,0 +1,96 @@
+:root {
+  color-scheme: dark;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #05070a;
+  color: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+.stage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 32px;
+  background: #101820;
+  transition: background-color 280ms linear;
+}
+
+.status {
+  max-width: 760px;
+}
+
+.song-title {
+  margin: 0 0 12px;
+  font-size: clamp(32px, 6vw, 76px);
+  font-weight: 700;
+}
+
+.scene-name {
+  margin: 0 0 8px;
+  font-size: clamp(18px, 3vw, 32px);
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.timecode {
+  margin: 0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.sync-status {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+button {
+  min-width: 96px;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.24);
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 640px) {
+  .stage {
+    padding: 20px;
+  }
+
+  .controls {
+    width: 100%;
+  }
+
+  button {
+    min-width: 0;
+    flex: 1;
+  }
+}
