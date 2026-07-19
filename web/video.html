@@ -44,6 +44,15 @@
             object-fit: cover;
         }
 
+        .image {
+            position: fixed;
+            inset: 0;
+            display: none;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .backdrop {
             position: fixed;
             inset: 0;
@@ -145,6 +154,21 @@
             text-align: center;
         }
 
+        .cue-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            padding: clamp(32px, 8vw, 120px);
+            color: var(--text);
+            font-size: clamp(46px, 8vw, 118px);
+            font-weight: 900;
+            line-height: 1.05;
+            text-align: center;
+            text-shadow: 0 4px 24px #000, 0 1px 2px #000;
+            white-space: pre-wrap;
+        }
+
         @media (max-width: 720px) {
             .hud {
                 left: 16px;
@@ -166,8 +190,10 @@
 
 <body>
     <div class="backdrop" id="backdrop"></div>
+    <img class="image" id="image" alt="">
     <video id="video" muted playsinline preload="auto"></video>
     <div class="empty" id="empty"></div>
+    <div class="cue-overlay" id="cueOverlay"></div>
 
     <aside class="hud">
         <div class="song">
@@ -180,8 +206,10 @@
 
     <script>
         const video = document.getElementById("video");
+        const image = document.getElementById("image");
         const backdrop = document.getElementById("backdrop");
         const empty = document.getElementById("empty");
+        const cueOverlay = document.getElementById("cueOverlay");
         const title = document.getElementById("title");
         const detail = document.getElementById("detail");
         const status = document.getElementById("status");
@@ -198,6 +226,9 @@
         let loadingSongId = null;
         let receivedAt = performance.now();
         let currentClipIndex = null;
+        let currentAutoIndex = null;
+        let currentAutoSlot = null;
+        let currentCueKey = null;
 
         function setStatus(text, mode) {
             status.textContent = text;
@@ -240,6 +271,9 @@
                 song = nextSong;
                 loadedSongId = songId;
                 currentClipIndex = null;
+                currentAutoIndex = null;
+                currentAutoSlot = null;
+                currentCueKey = null;
                 title.textContent = song.title || playback.current_song_title || "LiveRig Video";
                 detail.textContent = song.artist || "";
                 setStatus("Conectado");
@@ -247,6 +281,9 @@
                 song = null;
                 loadedSongId = null;
                 currentClipIndex = null;
+                currentAutoIndex = null;
+                currentAutoSlot = null;
+                currentCueKey = null;
                 video.removeAttribute("src");
                 video.load();
                 showFallback();
@@ -263,6 +300,9 @@
             loadedSongId = null;
             loadingSongId = null;
             currentClipIndex = null;
+            currentAutoIndex = null;
+            currentAutoSlot = null;
+            currentCueKey = null;
             video.removeAttribute("src");
             video.load();
             showFallback();
@@ -297,15 +337,25 @@
         }
 
         function updateVideo(position) {
+            const cue = cueAt(position);
+            if (cue) {
+                updateCue(cue, position);
+                return;
+            }
+
+            currentCueKey = null;
+            hideCueOverlay();
+
             const index = clipIndexAt(position);
 
             if (index === null || !song || !song.videos[index]) {
                 currentClipIndex = null;
-                video.removeAttribute("src");
-                video.load();
-                showFallback();
+                updateAutoVisual(position);
                 return;
             }
+
+            currentAutoIndex = null;
+            currentAutoSlot = null;
 
             const clip = song.videos[index];
             const start = Number(clip.start) || 0;
@@ -313,6 +363,7 @@
 
             if (currentClipIndex !== index) {
                 currentClipIndex = index;
+                video.loop = false;
                 video.src = clip.src;
                 video.currentTime = expectedTime;
                 showVideo();
@@ -335,6 +386,213 @@
             }
         }
 
+        function cueAt(position) {
+            const cues = song?.visual?.cues;
+            if (!Array.isArray(cues) || cues.length === 0) {
+                return null;
+            }
+
+            for (const cue of cues) {
+                const start = Number(cue.start);
+                const end = Number(cue.end);
+                if (!Number.isFinite(start) || !Number.isFinite(end)) {
+                    continue;
+                }
+
+                if (start <= position && position < end) {
+                    return cue;
+                }
+            }
+
+            return null;
+        }
+
+        function updateCue(cue, position) {
+            const key = `${cue.type}:${cue.start}:${cue.end}:${cue.text || ""}:${cue.file || ""}:${cue.background || ""}`;
+            const firstFrame = currentCueKey !== key;
+            currentCueKey = key;
+            currentClipIndex = null;
+            currentAutoIndex = null;
+            currentAutoSlot = null;
+
+            if (cue.type === "media") {
+                hideCueOverlay();
+                showCueMedia(cue.media, position, Number(cue.start) || 0, firstFrame);
+                return;
+            }
+
+            const background = cue.background_media || null;
+            if (background) {
+                showCueMedia(background, position, Number(cue.start) || 0, firstFrame);
+            } else if (firstFrame) {
+                video.removeAttribute("src");
+                video.load();
+                showFallback();
+            }
+
+            if (cue.type === "message") {
+                showCueText(cue.text || "");
+                return;
+            }
+
+            if (cue.type === "lyrics") {
+                showCueText(currentLyricText(position));
+            }
+        }
+
+        function showCueMedia(media, position, start, firstFrame) {
+            if (!media || !media.src) {
+                showFallback();
+                return;
+            }
+
+            if (media.type === "image") {
+                image.src = media.src;
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+                showImage();
+                return;
+            }
+
+            if (media.type === "video") {
+                const expectedTime = Math.max(0, position - start);
+                if (firstFrame || video.src !== absoluteUrl(media.src)) {
+                    video.loop = false;
+                    video.src = media.src;
+                    video.currentTime = expectedTime;
+                    showVideo();
+                }
+
+                const drift = Math.abs(video.currentTime - expectedTime);
+                if (Number.isFinite(expectedTime) && drift > 0.25) {
+                    video.currentTime = expectedTime;
+                }
+
+                if (playback.playing) {
+                    const promise = video.play();
+                    if (promise) {
+                        promise.catch(() => {
+                            setStatus("Clique para liberar video", "error");
+                        });
+                    }
+                } else if (!video.paused) {
+                    video.pause();
+                }
+                return;
+            }
+
+            showFallback();
+        }
+
+        function currentLyricText(position) {
+            const lyrics = song?.lyrics;
+            if (!Array.isArray(lyrics) || lyrics.length === 0) {
+                return "";
+            }
+
+            let current = null;
+            for (const item of lyrics) {
+                if (item.start <= position) {
+                    current = item;
+                } else {
+                    break;
+                }
+            }
+
+            return current?.text || "";
+        }
+
+        function showCueText(text) {
+            cueOverlay.textContent = text;
+            cueOverlay.style.display = text ? "grid" : "none";
+        }
+
+        function hideCueOverlay() {
+            cueOverlay.textContent = "";
+            cueOverlay.style.display = "none";
+        }
+
+        function absoluteUrl(src) {
+            return new URL(src, location.href).href;
+        }
+
+        function updateAutoVisual(position) {
+            const media = autoMedia();
+            if (media.length === 0) {
+                video.removeAttribute("src");
+                video.load();
+                showFallback();
+                return;
+            }
+
+            const interval = Number(song?.visual?.shuffle_interval) || 12;
+            const slot = Math.floor(Math.max(0, position) / Math.max(1, interval));
+
+            if (currentAutoSlot !== slot || currentAutoIndex === null) {
+                currentAutoSlot = slot;
+                currentAutoIndex = randomMediaIndex(media, currentAutoIndex);
+                showAutoMedia(media[currentAutoIndex]);
+            }
+
+            if (media[currentAutoIndex]?.type === "video") {
+                if (playback.playing) {
+                    const promise = video.play();
+                    if (promise) {
+                        promise.catch(() => {
+                            setStatus("Clique para liberar video", "error");
+                        });
+                    }
+                } else if (!video.paused) {
+                    video.pause();
+                }
+            }
+        }
+
+        function autoMedia() {
+            const media = song?.visual?.media;
+            return Array.isArray(media) ? media : [];
+        }
+
+        function randomMediaIndex(media, previousIndex) {
+            if (media.length <= 1) {
+                return 0;
+            }
+
+            let index = previousIndex;
+            while (index === previousIndex) {
+                index = Math.floor(Math.random() * media.length);
+            }
+
+            return index;
+        }
+
+        function showAutoMedia(media) {
+            if (!media || !media.src) {
+                showFallback();
+                return;
+            }
+
+            if (media.type === "image") {
+                image.src = media.src;
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+                showImage();
+                return;
+            }
+
+            if (media.type === "video") {
+                video.loop = true;
+                video.src = media.src;
+                video.currentTime = 0;
+                showVideo();
+                return;
+            }
+
+            showFallback();
+        }
+
         function frame() {
             updateVideo(visualPosition());
             requestAnimationFrame(frame);
@@ -342,12 +600,21 @@
 
         function showFallback() {
             video.style.display = "none";
+            image.style.display = "none";
             backdrop.style.display = "block";
+            empty.style.display = "none";
+        }
+
+        function showImage() {
+            backdrop.style.display = "none";
+            video.style.display = "none";
+            image.style.display = "block";
             empty.style.display = "none";
         }
 
         function showVideo() {
             backdrop.style.display = "none";
+            image.style.display = "none";
             video.style.display = "block";
             empty.style.display = "none";
         }

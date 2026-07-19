@@ -1,23 +1,29 @@
 # LiveRig
 
-Aplicativo desktop para condução de shows ao vivo utilizando o **REAPER**.
+Aplicativo desktop para conducao de shows ao vivo utilizando o **REAPER**.
 
-O LiveRig organiza bibliotecas de músicas, monta playlists, controla a reprodução do REAPER, exibe letras sincronizadas e centraliza todas as informações necessárias durante uma apresentação.
+O LiveRig organiza bibliotecas de musicas, monta playlists, controla a reproducao do REAPER, exibe letras sincronizadas, publica estado em tempo real para o navegador e centraliza informacoes uteis durante uma apresentacao.
 
 ---
 
 # Funcionalidades
 
-- Biblioteca de músicas
-- Busca instantânea
+- Biblioteca de musicas
+- Busca instantanea
 - Playlists
-- Reprodução integrada ao REAPER
-- Letras sincronizadas
-- Notas da música
-- Exibição de capa
-- Comunicação com o REAPER
-- Integração OSC (macOS)
-- Importador automático de projetos `.RPP`
+- Reproducao integrada ao REAPER
+- Letras sincronizadas no app desktop
+- Teleprompt web de letras sincronizadas
+- Projecao web de imagens e videos sincronizados
+- Midias automaticas por pasta `Media`
+- Cues visuais por trecho da musica
+- Notas da musica
+- Exibicao de capa
+- Comunicacao com o REAPER
+- Servidor HTTP local
+- WebSocket para sincronizacao em tempo real
+- Integracao OSC (macOS)
+- Importador automatico de projetos `.RPP`
 
 ---
 
@@ -27,7 +33,7 @@ O LiveRig organiza bibliotecas de músicas, monta playlists, controla a reprodu�
 - REAPER instalado
 - Git
 
-As dependências Python encontram-se em:
+As dependencias Python encontram-se em:
 
 ```text
 requirements.txt
@@ -35,7 +41,7 @@ requirements.txt
 
 ---
 
-# Configuração do ambiente
+# Configuracao do ambiente
 
 ## Windows
 
@@ -75,11 +81,180 @@ Com o ambiente virtual ativo:
 python main.py
 ```
 
-Na primeira execução selecione a pasta **shows** contendo as músicas do repertório.
+Na primeira execucao selecione a pasta **shows** contendo as musicas do repertorio.
 
 ---
 
-# Dados do usuário
+# Visual Sync
+
+Ao iniciar o LiveRig, tambem e iniciado um servidor HTTP local em:
+
+```text
+http://127.0.0.1:8080
+```
+
+## Teleprompt
+
+O endereco principal exibe o teleprompt de letras sincronizadas:
+
+```text
+http://127.0.0.1:8080/
+```
+
+O teleprompt usa o estado de playback do REAPER, preserva quebras de linha vindas da track `Lyrics` e mostra:
+
+- letra atual
+- proxima letra
+- titulo e artista
+- barra de progresso
+
+## Projecao de video
+
+A tela de projecao visual fica em:
+
+```text
+http://127.0.0.1:8080/video
+```
+
+Ela suporta:
+
+- tela cheia pelo botao `FS`
+- fallback com `pano_de_fundo.jpg`
+- imagens e videos aleatorios da pasta `Media`
+- videos fixos por trecho usando `videos`
+- cues visuais por trecho usando `visual_cues`
+
+Quando nao ha video ativo, a tela mostra:
+
+```text
+pano_de_fundo.jpg
+```
+
+## Midia automatica
+
+Para ativar midia automatica em uma musica, coloque arquivos dentro da pasta `Media` do pacote:
+
+```text
+Minha Musica/
++-- config.json
++-- project.rpp
+`-- Media/
+    +-- foto1.jpg
+    +-- foto2.png
+    +-- loop1.mp4
+    `-- loop2.mp4
+```
+
+Formatos reconhecidos:
+
+- Imagens: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`
+- Videos: `.mp4`, `.webm`, `.mov`, `.m4v`
+
+O intervalo padrao de troca e de 12 segundos. Ele pode ser ajustado no `config.json`:
+
+```json
+{
+    "visual": {
+        "shuffle_interval": 12
+    }
+}
+```
+
+## Videos fixos por trecho
+
+Para forcar um video em um trecho especifico:
+
+```json
+{
+    "videos": [
+        {
+            "start": 0,
+            "end": 30,
+            "file": "Media/intro.mp4"
+        }
+    ]
+}
+```
+
+Enquanto um item de `videos` estiver ativo, ele tem prioridade sobre a midia automatica.
+
+## Cues visuais
+
+Os cues visuais permitem forcar mensagens, letras ou midias em trechos especificos:
+
+```json
+{
+    "visual_cues": [
+        {
+            "start": 58.5,
+            "end": 74.0,
+            "type": "message",
+            "text": "CANTA COM A GENTE"
+        },
+        {
+            "start": 74.0,
+            "end": 90.0,
+            "type": "lyrics"
+        },
+        {
+            "start": 120.0,
+            "end": 128.0,
+            "type": "media",
+            "file": "Media/ponte.mp4"
+        }
+    ]
+}
+```
+
+Tambem e possivel usar uma imagem ou video como fundo de uma mensagem ou letra:
+
+```json
+{
+    "visual_cues": [
+        {
+            "start": 58.5,
+            "end": 74.0,
+            "type": "message",
+            "text": "CANTA COM A GENTE",
+            "background": "Media/refrao.mp4"
+        }
+    ]
+}
+```
+
+Tipos disponiveis:
+
+- `message`: exibe texto grande na tela
+- `lyrics`: exibe a letra atual em tamanho grande
+- `media`: exibe uma imagem ou video especifico
+
+Prioridade da tela `/video`:
+
+1. `visual_cues`
+2. `videos`
+3. midia automatica da pasta `Media`
+4. `pano_de_fundo.jpg`
+
+## API local
+
+Endpoints principais:
+
+```text
+GET /api/playback
+GET /api/songs/{song_id}/sync
+GET /api/songs/{song_id}/media/{media_path}
+GET /pano_de_fundo.jpg
+```
+
+O WebSocket de tempo real fica em:
+
+```text
+ws://127.0.0.1:8080/ws
+```
+
+---
+
+# Dados do usuario
 
 O LiveRig nunca grava arquivos dentro da pasta do programa.
 
@@ -93,15 +268,15 @@ Estrutura:
 
 ```text
 LiveRig
-├── settings.json
-├── logs
-├── runtime
-└── shows
++-- settings.json
++-- logs
++-- runtime
+`-- shows
 ```
 
 Isso permite atualizar o programa sem perder:
 
-- configurações
+- configuracoes
 - playlists
 - logs
 - biblioteca
@@ -110,9 +285,9 @@ Isso permite atualizar o programa sem perder:
 
 # Processo de Release
 
-Todo o processo de geração de versões foi automatizado.
+Todo o processo de geracao de versoes foi automatizado.
 
-## Alterando a versão
+## Alterando a versao
 
 Edite apenas:
 
@@ -130,7 +305,7 @@ Nenhum outro arquivo precisa ser alterado.
 
 ---
 
-## Gerando uma nova versão
+## Gerando uma nova versao
 
 Com o ambiente virtual ativo execute:
 
@@ -144,35 +319,35 @@ O processo realiza automaticamente:
 - remove `dist`
 - remove `release`
 - executa o PyInstaller
-- copia o executável para `release`
+- copia o executavel para `release`
 - gera o instalador Windows com o Inno Setup
 
-Ao final serão gerados:
+Ao final serao gerados:
 
 ```text
 release/
-│
-├── LiveRig/
-│   ├── LiveRig.exe
-│   └── _internal/
-│
-└── LiveRigSetup-x.y.z.exe
+|
++-- LiveRig/
+|   +-- LiveRig.exe
+|   `-- _internal/
+|
+`-- LiveRigSetup-x.y.z.exe
 ```
 
-Esse passa a ser o procedimento oficial para publicação de novas versões.
+Esse passa a ser o procedimento oficial para publicacao de novas versoes.
 
 ---
 
-# Distribuição
+# Distribuicao
 
-O arquivo a ser distribuído é:
+O arquivo a ser distribuido e:
 
 ```text
 release/
     LiveRigSetup-x.y.z.exe
 ```
 
-O usuário não precisa instalar:
+O usuario nao precisa instalar:
 
 - Python
 - bibliotecas Python
@@ -188,13 +363,13 @@ Criando:
 
 - Menu Iniciar
 - Desinstalador
-- Atalho na Área de Trabalho (opcional)
+- Atalho na Area de Trabalho (opcional)
 
 ---
 
-# Recursos da aplicação
+# Recursos da aplicacao
 
-Arquivos distribuídos juntamente com o executável são localizados através do utilitário:
+Arquivos distribuidos juntamente com o executavel sao localizados atraves do utilitario:
 
 ```text
 resource_path.py
@@ -203,20 +378,24 @@ resource_path.py
 Isso garante compatibilidade entre:
 
 - desenvolvimento
-- executável PyInstaller
+- executavel PyInstaller
 
-Atualmente o principal recurso distribuído é:
+Recursos atuais:
 
 ```text
 assets/
     LiveRigPosition.lua
+web/
+    index.html
+    video.html
+pano_de_fundo.jpg
 ```
 
 ---
 
 # Importador de projetos
 
-O módulo `LiveRigImporter` converte projetos do REAPER para o formato utilizado pelo LiveRig.
+O modulo `LiveRigImporter` converte projetos do REAPER para o formato utilizado pelo LiveRig.
 
 Exemplo:
 
@@ -224,13 +403,13 @@ Exemplo:
 python -m LiveRigImporter.main musica.rpp --output shows
 ```
 
-Também é possível configurar:
+Tambem e possivel configurar:
 
 ```text
 LiveRigImporter/config.local.json
 ```
 
-ou utilizar a variável de ambiente:
+ou utilizar a variavel de ambiente:
 
 ```text
 LIVERIG_IMPORTER_OUTPUT_DIR
@@ -243,53 +422,81 @@ LIVERIG_IMPORTER_OUTPUT_DIR
 ```text
 LiveRig/
 
-├── assets/
-├── controllers/
-├── views/
-├── widgets/
-├── LiveRigImporter/
++-- assets/
++-- controllers/
++-- network/
++-- playback/
++-- views/
++-- visual_sync/
++-- web/
++-- widgets/
++-- LiveRigImporter/
++-- tests/
 
-├── build.py
-├── LiveRig.spec
-├── config.py
-├── main.py
-├── playback_clock.py
-├── reaper_controller.py
-├── resource_path.py
-├── song_manager.py
-├── version.py
-└── installer.iss
++-- build.py
++-- LiveRig.spec
++-- config.py
++-- main.py
++-- playback_clock.py
++-- reaper_controller.py
++-- resource_path.py
++-- song_manager.py
++-- version.py
+`-- installer.iss
 ```
 
 ---
 
-# Dependências
+# Dependencias
 
 | Biblioteca | Finalidade |
 |------------|------------|
-| customtkinter | Interface gráfica |
-| python-osc | Comunicação OSC |
+| customtkinter | Interface grafica |
+| python-osc | Comunicacao OSC |
+| fastapi | Servidor HTTP e WebSocket local |
+| uvicorn | Execucao do servidor HTTP |
+| Pillow | Manipulacao/exibicao de imagens |
+
+---
+
+# Testes
+
+Os testes automatizados usam `unittest`:
+
+```powershell
+python -m unittest discover -s tests
+```
 
 ---
 
 # Roadmap
 
-## Concluído
+## Concluido
 
 - Interface principal
-- Biblioteca de músicas
+- Biblioteca de musicas
 - Playlists
-- Integração com REAPER
+- Integracao com REAPER
+- Letras sincronizadas no app desktop
+- Teleprompt web sincronizado
+- Projecao web de videos e imagens
+- Midia automatica por pasta `Media`
+- Cues visuais por trecho
+- Fallback visual com `pano_de_fundo.jpg`
+- API local de sync
+- WebSocket em tempo real
 - Importador de projetos
 - Build automatizado
-- Executável Windows
+- Executavel Windows
 - Instalador Windows
 - Versionamento centralizado
 
-## Próximas funcionalidades
+## Proximas funcionalidades
 
-- Informações de versão nas propriedades do executável
-- Atualizador automático
+- Interface grafica para editar `visual_cues`
+- Garantir inclusao de `web/` e `pano_de_fundo.jpg` no build final
+- Informacoes de versao nas propriedades do executavel
+- Atualizador automatico
 - GitHub Releases
 - Assinatura digital do instalador
 - Pipeline CI/CD
@@ -298,35 +505,35 @@ LiveRig/
 
 # Desenvolvimento
 
-O fluxo recomendado é:
+O fluxo recomendado e:
 
 ```text
 Criar feature
 
-↓
+v
 
 Testar
 
-↓
+v
 
 Commit
 
-↓
+v
 
 Atualizar APP_VERSION
 
-↓
+v
 
 python build.py
 
-↓
+v
 
 Distribuir LiveRigSetup-x.y.z.exe
 ```
 
 ---
 
-# Licença
+# Licenca
 
 Projeto de uso privado.
 

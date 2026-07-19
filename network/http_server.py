@@ -18,6 +18,11 @@ from playback.playback_state import PlaybackState
 
 logger = logging.getLogger(__name__)
 
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".m4v"}
+DEFAULT_VISUAL_MEDIA_FOLDER = "Media"
+DEFAULT_SHUFFLE_INTERVAL = 12
+
 
 class HttpServer:
 
@@ -162,6 +167,7 @@ class HttpServer:
                 for item in lyrics_timeline.items
             ],
             "videos": self._videos(song_id, song),
+            "visual": self._visual(song_id, song),
         }
 
     def song_media_path(self, song_id: str, media_path: str) -> Path | None:
@@ -186,6 +192,121 @@ class HttpServer:
 
         return path
 
+    def _visual(self, song_id: str, song: Song) -> dict:
+
+        config = song.extra.get("visual") if song.extra is not None else None
+        config = config if isinstance(config, dict) else {}
+
+        media_folder = config.get("media_folder", DEFAULT_VISUAL_MEDIA_FOLDER)
+        if not isinstance(media_folder, str) or not media_folder.strip():
+            media_folder = DEFAULT_VISUAL_MEDIA_FOLDER
+
+        shuffle_interval = config.get("shuffle_interval", DEFAULT_SHUFFLE_INTERVAL)
+        try:
+            shuffle_interval = max(1, int(shuffle_interval))
+        except (TypeError, ValueError):
+            shuffle_interval = DEFAULT_SHUFFLE_INTERVAL
+
+        return {
+            "mode": config.get("mode") if config.get("mode") == "manual" else "auto",
+            "media_folder": media_folder,
+            "shuffle_interval": shuffle_interval,
+            "media": self._auto_media(song_id, song, media_folder),
+            "cues": self._visual_cues(song_id, song),
+        }
+
+    def _auto_media(
+        self,
+        song_id: str,
+        song: Song,
+        media_folder: str,
+    ) -> list[dict]:
+
+        requested = Path(media_folder)
+        if requested.is_absolute():
+            return []
+
+        root = song.folder.resolve()
+        folder = (root / requested).resolve()
+        if not folder.is_relative_to(root):
+            return []
+
+        if not folder.exists() or not folder.is_dir():
+            return []
+
+        items = []
+
+        for path in sorted(folder.iterdir(), key=lambda item: item.name.casefold()):
+            if not path.is_file():
+                continue
+
+            media_type = self._media_type(path)
+            if media_type is None:
+                continue
+
+            relative_path = path.relative_to(root).as_posix()
+            items.append(
+                {
+                    "type": media_type,
+                    "file": relative_path,
+                    "src": self._media_src(song_id, relative_path),
+                }
+            )
+
+        return items
+
+    def _visual_cues(self, song_id: str, song: Song) -> list[dict]:
+
+        if song.extra is None:
+            return []
+
+        cues = song.extra.get("visual_cues")
+        if not isinstance(cues, list):
+            return []
+
+        payload = []
+
+        for cue in cues:
+            if not isinstance(cue, dict):
+                continue
+
+            item = dict(cue)
+            cue_type = item.get("type")
+            if cue_type not in {"message", "lyrics", "media"}:
+                continue
+
+            file_media = self._cue_media(song_id, song, item.get("file"))
+            if file_media is not None:
+                item["media"] = file_media
+
+            background_media = self._cue_media(song_id, song, item.get("background"))
+            if background_media is not None:
+                item["background_media"] = background_media
+
+            payload.append(item)
+
+        return payload
+
+    def _cue_media(self, song_id: str, song: Song, value: object) -> dict | None:
+
+        if not isinstance(value, str) or not value.strip():
+            return None
+
+        path = self.song_media_path(song_id, value.strip())
+        if path is None:
+            return None
+
+        media_type = self._media_type(path)
+        if media_type is None:
+            return None
+
+        normalized_path = value.strip().replace("\\", "/")
+        return {
+            "type": media_type,
+            "file": normalized_path,
+            "src": self._media_src(song_id, normalized_path),
+        }
+
     def _videos(self, song_id: str, song: Song) -> list[dict]:
 
         if song.extra is None:
@@ -207,13 +328,26 @@ class HttpServer:
 
             item = dict(video)
             normalized_path = media_path.strip().replace("\\", "/")
-            item["src"] = (
-                f"/api/songs/{quote(song_id)}/media/"
-                f"{quote(normalized_path, safe='/')}"
-            )
+            item["src"] = self._media_src(song_id, normalized_path)
             payload.append(item)
 
         return payload
+
+    def _media_type(self, path: Path) -> str | None:
+
+        suffix = path.suffix.casefold()
+        if suffix in IMAGE_EXTENSIONS:
+            return "image"
+        if suffix in VIDEO_EXTENSIONS:
+            return "video"
+        return None
+
+    def _media_src(self, song_id: str, media_path: str) -> str:
+
+        return (
+            f"/api/songs/{quote(song_id)}/media/"
+            f"{quote(media_path, safe='/')}"
+        )
 
     def notify_playback_changed(self) -> None:
 
