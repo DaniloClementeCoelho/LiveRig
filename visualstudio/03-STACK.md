@@ -460,3 +460,50 @@ A stack será considerada validada quando conseguir:
 7. reproduzir o pacote localmente em tela cheia.
 
 A geração por IA será adicionada depois que esse fluxo básico estiver funcionando de ponta a ponta.
+## Implementacao atual
+
+Comandos atuais de desenvolvimento:
+
+```powershell
+pip install -r requirements.txt
+uvicorn api.main:app --reload
+```
+
+Variavel de ambiente suportada:
+
+```dotenv
+VISUALSTUDIO_COMFYUI_URL=http://192.168.15.9:8188
+```
+
+Dependencias atualmente usadas:
+
+```text
+fastapi
+uvicorn[standard]
+pydantic-settings
+httpx
+```
+
+Endpoints implementados:
+
+```text
+GET  /health
+GET  /comfyui/status
+POST /comfyui/generate-image
+POST /comfyui/generate-image-and-wait
+GET  /comfyui/history/{prompt_id}
+GET  /comfyui/image
+POST /projects/{project_id}/generate-image-asset
+```
+
+Workflow validado:
+
+```text
+workflows/sdxlturbo_api.json
+```
+
+Projeto piloto:
+
+```text
+projects/a-little-respect/
+```

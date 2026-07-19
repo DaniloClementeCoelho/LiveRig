@@ -54,6 +54,52 @@ def save_generated_image_asset(
     return asset
 
 
+def save_remote_generated_image_asset(
+    project_id: str,
+    image_filename: str,
+    image_type: str,
+    image_subfolder: str,
+    preview_url: str,
+    prompt: str,
+    negative_prompt: str,
+    seed: int,
+    prompt_id: str,
+) -> dict:
+    project_dir = _project_dir(project_id)
+    asset_id = f"img-{uuid4().hex[:12]}"
+    asset = {
+        "id": asset_id,
+        "type": "image",
+        "origin": "generated",
+        "status": "draft",
+        "storage": "remote",
+        "file": None,
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "seed": seed,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "remote": {
+            "engine": "comfyui",
+            "filename": image_filename,
+            "subfolder": image_subfolder,
+            "type": image_type,
+            "preview_url": preview_url,
+        },
+        "source": {
+            "engine": "comfyui",
+            "workflow": "workflows/sdxlturbo_api.json",
+            "prompt_id": prompt_id,
+            "original_filename": image_filename,
+        },
+    }
+
+    assets_data = _load_assets(project_dir)
+    assets_data["assets"].append(asset)
+    _save_assets(project_dir, assets_data)
+
+    return asset
+
+
 def _project_dir(project_id: str) -> Path:
     project_dir = (PROJECTS_ROOT / project_id).resolve()
     projects_root = PROJECTS_ROOT.resolve()

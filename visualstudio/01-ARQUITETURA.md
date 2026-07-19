@@ -265,3 +265,28 @@ visualstudio/
 - local definitivo de armazenamento dos assets.
 
 Esses itens serão definidos em `03-STACK.md` e confirmados por testes pequenos antes da implementação completa.
+## Estado implementado no MVP inicial
+
+O primeiro prototipo ja validou os seguintes pontos:
+
+- player web local em `player/`, com modo standalone;
+- manifesto piloto em `projects/a-little-respect/orquestrador.json`;
+- sincronizacao do player com o LiveRig por WebSocket em `ws://127.0.0.1:8080/ws`;
+- carregamento de manifesto visual referenciado pelo LiveRig via `visual.manifest`;
+- API FastAPI local em `api/main.py`;
+- cliente ComfyUI em `src/comfyui_client.py`;
+- workflow SDXL Turbo versionado em `workflows/sdxlturbo_api.json`;
+- geracao de imagem por ComfyUI e consulta de historico por `prompt_id`;
+- proxy local para visualizar imagem gerada;
+- registro de imagem gerada como asset do projeto em `assets.json`.
+
+O fluxo validado ate aqui e:
+
+```text
+Prompt
+  -> API do Visual Studio
+  -> ComfyUI no HomeLab
+  -> imagem gerada
+  -> copia local no projeto visual
+  -> registro em assets.json
+```

@@ -3,6 +3,7 @@ const liveRigBaseUrl = "http://127.0.0.1:8080";
 const liveRigWebSocketUrl = "ws://127.0.0.1:8080/ws";
 
 const stage = document.querySelector("#stage");
+const visualLayer = document.querySelector("#visualLayer");
 const songTitle = document.querySelector("#songTitle");
 const sceneName = document.querySelector("#sceneName");
 const timecode = document.querySelector("#timecode");
@@ -70,6 +71,7 @@ function renderScene(scene, elapsedMs) {
 
   if (!scene) {
     sceneName.textContent = "Fim";
+    visualLayer.innerHTML = "";
     return;
   }
 
@@ -81,7 +83,39 @@ function renderScene(scene, elapsedMs) {
   sceneName.textContent = scene.id;
 
   if (scene.type === "color") {
+    visualLayer.innerHTML = "";
     stage.style.backgroundColor = scene.color;
+    return;
+  }
+
+  if (scene.type === "image") {
+    stage.style.backgroundColor = scene.background_color || "#05070a";
+    visualLayer.innerHTML = "";
+
+    const image = document.createElement("img");
+    image.src = scene.src;
+    image.alt = scene.alt || scene.id;
+    image.className = "scene-image";
+    visualLayer.appendChild(image);
+    return;
+  }
+
+  if (scene.type === "video") {
+    stage.style.backgroundColor = scene.background_color || "#05070a";
+    visualLayer.innerHTML = "";
+
+    const video = document.createElement("video");
+    video.src = scene.src;
+    video.className = "scene-video";
+    video.muted = scene.muted !== false;
+    video.loop = scene.loop !== false;
+    video.playsInline = true;
+    video.autoplay = true;
+    visualLayer.appendChild(video);
+
+    video.play().catch(() => {
+      sceneName.textContent = `${scene.id} (aguardando play do navegador)`;
+    });
   }
 }
 

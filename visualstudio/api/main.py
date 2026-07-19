@@ -1,11 +1,14 @@
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+import re
+from pathlib import Path
 
 from src.comfyui_client import ComfyUIClient
 from src.config import settings
-from src.project_assets import save_generated_image_asset
+from src.project_assets import save_generated_image_asset, save_remote_generated_image_asset
 from src.workflow_loader import build_sdxl_turbo_workflow
 
 app = FastAPI(title="LiveRig Visual Studio")
@@ -19,6 +22,13 @@ class GenerateImageRequest(BaseModel):
 
 
 class GenerateProjectImageAssetRequest(BaseModel):
+    prompt: str = Field(min_length=1)
+    negative_prompt: str = "blurry, low quality, text, watermark"
+    seed: int = 0
+
+
+class GenerateStudioImageRequest(BaseModel):
+    song_name: str = Field(min_length=1)
     prompt: str = Field(min_length=1)
     negative_prompt: str = "blurry, low quality, text, watermark"
     seed: int = 0
@@ -219,6 +229,70 @@ async def generate_project_image_asset(
     }
 
 
+@app.post("/projects/{project_id}/generate-remote-image-asset")
+async def generate_remote_project_image_asset(
+    project_id: str,
+    request: GenerateProjectImageAssetRequest,
+) -> dict:
+    filename_prefix = f"LiveRig_{project_id.replace('-', '_')}"
+    generation = await comfyui_generate_image_and_wait(
+        GenerateImageRequest(
+            prompt=request.prompt,
+            negative_prompt=request.negative_prompt,
+            seed=request.seed,
+            filename_prefix=filename_prefix,
+        )
+    )
+
+    image = generation["image"]
+
+    try:
+        asset = save_remote_generated_image_asset(
+            project_id=project_id,
+            image_filename=image["filename"],
+            image_type=image["type"],
+            image_subfolder=image["subfolder"],
+            preview_url=image["url"],
+            prompt=request.prompt,
+            negative_prompt=request.negative_prompt,
+            seed=request.seed,
+            prompt_id=generation["prompt_id"],
+        )
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "asset": asset,
+    }
+
+
+@app.post("/api/studio/generate-image")
+async def studio_generate_image(request: GenerateStudioImageRequest) -> dict:
+    song_folder = _safe_folder_name(request.song_name)
+    filename_prefix = f"{song_folder}/LiveRig_{song_folder}"
+    generation = await comfyui_generate_image_and_wait(
+        GenerateImageRequest(
+            prompt=request.prompt,
+            negative_prompt=request.negative_prompt,
+            seed=request.seed,
+            filename_prefix=filename_prefix,
+        )
+    )
+
+    image = generation["image"]
+
+    return {
+        "ok": True,
+        "song_name": request.song_name,
+        "server_output_folder": f"~/homelab/compose/comfyui/output/{song_folder}",
+        "comfyui_url": generation["comfyui_url"],
+        "prompt_id": generation["prompt_id"],
+        "image": image,
+    }
+
+
 def _first_history_image(history: dict, prompt_id: str) -> dict | None:
     prompt_history = history.get(prompt_id)
     if not isinstance(prompt_history, dict):
@@ -246,3 +320,16 @@ def _image_url(filename: str, image_type: str, subfolder: str) -> str:
     if subfolder:
         url += f"&subfolder={subfolder}"
     return url
+
+
+def _safe_folder_name(value: str) -> str:
+    normalized = value.strip().lower()
+    normalized = re.sub(r"[^a-z0-9_-]+", "-", normalized)
+    normalized = re.sub(r"-{2,}", "-", normalized).strip("-")
+    if not normalized:
+        return "sem-nome"
+    return normalized
+
+
+STUDIO_DIR = Path(__file__).resolve().parent.parent / "studio"
+app.mount("/studio", StaticFiles(directory=STUDIO_DIR, html=True), name="studio")

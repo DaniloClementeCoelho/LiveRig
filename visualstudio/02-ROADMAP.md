@@ -289,3 +289,19 @@ Uma fase somente será considerada concluída quando:
 - o `CHANGELOG.md` estiver atualizado.
 
 Falhas encontradas durante os testes devem ser tratadas antes de ampliar o escopo.
+## Progresso registrado
+
+Status em 2026-07-19:
+
+- Fase 1 iniciada e validada parcialmente: manifesto piloto e player local funcionando.
+- Fase 2 validada parcialmente: player seguindo estado do LiveRig por WebSocket.
+- Fase 4 iniciada: `assets.json` criado sob demanda para registrar imagens geradas.
+- Fase 6 iniciada e validada parcialmente: ComfyUI recebeu workflow SDXL Turbo, gerou imagem e retornou arquivo.
+
+Proximo foco recomendado:
+
+1. listar assets do projeto por endpoint;
+2. exibir assets no player ou em uma tela simples de revisao;
+3. permitir aprovar ou descartar assets;
+4. usar assets aprovados no manifesto de cenas;
+5. depois avancar para thumbnails, proxies e exportacao.

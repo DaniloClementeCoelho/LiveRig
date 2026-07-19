@@ -14,8 +14,10 @@
         "id": "intro",
         "start_ms": 0,
         "duration_ms": 10000,
-        "type": "color",
-        "color": "#101820"
+        "type": "image",
+        "src": "../projects/a-little-respect/assets/images/img-b3f01d87d109-LiveRig_a_little_respect_00001_.png",
+        "alt": "Visual neon retro synthpop para A Little Respect",
+        "background_color": "#05070a"
       },
       {
         "id": "verse",
