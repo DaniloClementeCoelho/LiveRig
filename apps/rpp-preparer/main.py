@@ -39,7 +39,7 @@ def main() -> int:
         "--config",
         default=DEFAULT_CONFIG,
         type=Path,
-        help="Arquivo JSON de configuracao. Padrao: LiveRigImporter/config.local.json",
+        help="Arquivo JSON de configuracao. Padrao: apps/rpp-preparer/config.local.json",
     )
     parser.add_argument(
         "--overwrite",
@@ -60,7 +60,7 @@ def main() -> int:
     if output is None:
         print("Pasta de saida nao configurada.")
         print("Use uma destas opcoes:")
-        print("  python -m LiveRigImporter.main entrada.rpp --output caminho\\da\\saida")
+        print("  python apps\\rpp-preparer\\main.py entrada.rpp --output caminho\\da\\saida")
         print(f"  $env:{OUTPUT_ENV_VAR} = 'caminho\\da\\saida'")
         print(f'  crie {args.config} com: {{"output_dir": "caminho/da/saida"}}')
         return 1

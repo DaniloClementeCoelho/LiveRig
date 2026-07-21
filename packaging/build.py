@@ -4,9 +4,14 @@ import subprocess
 import sys
 import os
 
+ROOT = Path(__file__).resolve().parents[1]
+APP_DIR = ROOT / "apps" / "liverig"
+
+sys.path.insert(0, str(APP_DIR))
+
 from version import APP_VERSION
 
-ROOT = Path(__file__).resolve().parent
+PACKAGING_DIR = ROOT / "packaging"
 
 BUILD_DIR = ROOT / "build"
 DIST_DIR = ROOT / "dist"
@@ -46,7 +51,7 @@ def main():
         "-m",
         "PyInstaller",
         "--clean",
-        "LiveRig.spec",
+        str(PACKAGING_DIR / "LiveRig.spec"),
     ])
 
     source = DIST_DIR / "LiveRig"
@@ -62,7 +67,7 @@ def main():
     run(
         [
             str(INNO_SETUP),
-            "installer.iss",
+            str(PACKAGING_DIR / "installer.iss"),
         ],
         env=env,
     )

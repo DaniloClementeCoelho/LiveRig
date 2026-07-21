@@ -12,6 +12,9 @@
 - Adicionado wrapper Windows para executar a geracao de video no HomeLab via SSH.
 - Adicionado orquestrador para gerar imagens pelo ComfyUI e montar video com a duracao de um WAV.
 - Adicionado plano JSON opcional para trechos sincronizados com texto/arquivo especifico.
+- Adicionado workflow low-VRAM com KSampler e checkpoint configuravel.
+- Reduzida resolucao padrao do orquestrador de imagens para 512x512.
+- Adicionado restart/free configuravel do ComfyUI entre lotes de geracao.
 - Atualizado manifesto piloto para usar a primeira imagem gerada pelo ComfyUI.
 - Criado player web minimo com troca de cenas por tempo.
 - Adicionado manifesto piloto para `A Little Respect`.

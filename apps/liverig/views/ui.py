@@ -100,6 +100,7 @@ class LiveRigApp:
         self.library_view = None
         self.playlist_view = None
         self.player_view = None
+        self.visual_sync = None
 
         self.root.bind_all("<space>", self._handle_space_pause, add="+")
         self.root.bind_all("<KeyPress-space>", self._handle_space_pause, add="+")
@@ -151,10 +152,7 @@ class LiveRigApp:
         )
         choose_button.grid(row=2, column=0, pady=(0, 14), sticky="ew")
 
-        message = "Pasta valida. Escolha a pasta para iniciar."
-        if not self._is_usable_shows_dir(self.shows_dir):
-            message = "Selecione a pasta que contem as musicas."
-        self.folder_status_var.set(message)
+        self.folder_status_var.set("Selecione a pasta que contem as musicas.")
 
         folder_status = self.ctk.CTkLabel(
             content,
@@ -247,27 +245,32 @@ class LiveRigApp:
 
     def _set_shows_dir(self, shows_dir: Path) -> None:
         resolved_dir = shows_dir.resolve()
-        if not self._is_usable_shows_dir(resolved_dir):
+        songs = SongManager(resolved_dir).load_songs()
+        if not songs:
             self.folder_status_var.set("Esta pasta nao contem musicas validas.")
             return
 
         self.shows_dir = resolved_dir
         self.settings.save_shows_dir(self.shows_dir)
-        self._start_main_screen()
+        self._start_main_screen(songs)
 
-    def _start_main_screen(self) -> None:
-        if not self._is_usable_shows_dir(self.shows_dir):
+    def _start_main_screen(self, songs: list[Song] | None = None) -> None:
+        if songs is None:
+            songs = SongManager(self.shows_dir).load_songs()
+
+        if not songs:
             self.folder_status_var.set("Escolha uma pasta shows valida antes de continuar.")
             return
 
         self.song_manager = SongManager(self.shows_dir)
-        self.songs = self.song_manager.load_songs()
+        self.songs = songs
         self.selected_song = self.songs[0] if self.songs else None
 
         self._build_main_layout()
         self.library_view.set_songs(self.songs)
         self.library_view.select(self.selected_song, notify=False)
         self._show_song(self.selected_song)
+        self._start_visual_sync()
         self._start_reaper_engine()
         self._update_lyrics()
 
@@ -324,6 +327,12 @@ class LiveRigApp:
 
     def _start_reaper_engine(self) -> None:
         try:
+            self.reaper.install_lua_script()
+        except OSError as exc:
+            self.status_var.set(f"Script do REAPER nao instalado: {exc}")
+            return
+
+        try:
             self.reaper.start()
         except RuntimeError as exc:
             self.status_var.set(f"REAPER nao iniciado: {exc}")
@@ -334,6 +343,19 @@ class LiveRigApp:
             return
 
         self.status_var.set("REAPER pronto.")
+
+    def _start_visual_sync(self) -> None:
+        if self.visual_sync is not None:
+            return
+
+        try:
+            from visual_sync import VisualSyncManager
+
+            self.visual_sync = VisualSyncManager(self.reaper)
+            self.visual_sync.start()
+        except Exception as exc:
+            self.visual_sync = None
+            self.status_var.set(f"Visual Sync nao iniciado: {exc}")
 
     def _update_lyrics(self) -> None:
         if self.player_view is None:
@@ -447,6 +469,8 @@ class LiveRigApp:
 
     def _on_close(self) -> None:
         try:
+            if self.visual_sync is not None:
+                self.visual_sync.stop()
             self.reaper.shutdown()
         finally:
             self.root.destroy()

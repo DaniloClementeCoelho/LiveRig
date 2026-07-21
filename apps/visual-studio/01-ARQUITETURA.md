@@ -233,7 +233,7 @@ Durante o MVP, a API também poderá rodar integralmente no Windows para simplif
 ## Organização do código
 
 ```text
-visualstudio/
+apps/visual-studio/
 ├── api/          # endpoints e orquestração
 ├── workers/      # geração e processamento
 ├── src/          # domínio e serviços compartilhados

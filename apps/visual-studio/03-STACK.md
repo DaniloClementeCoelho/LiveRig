@@ -95,7 +95,8 @@ Servidor inicial da API.
 Comando de desenvolvimento esperado:
 
 ```bash
-uvicorn visualstudio.api.main:app --reload
+cd apps/visual-studio
+uvicorn api.main:app --reload
 ```
 
 O caminho definitivo será confirmado quando o primeiro módulo Python for criado.
@@ -354,7 +355,7 @@ Durante o MVP, a aplicação também poderá rodar diretamente no Windows para r
 Estrutura prevista:
 
 ```text
-visualstudio/docker/
+apps/visual-studio/docker/
 ├── docker-compose.yml
 ├── Dockerfile.api
 └── .env.example
@@ -381,7 +382,7 @@ O repositório deverá conter apenas `.env.example`.
 ## 13. Organização de arquivos
 
 ```text
-visualstudio/
+apps/visual-studio/
 ├── api/          # FastAPI e endpoints
 ├── src/          # domínio, modelos e serviços
 ├── workers/      # geração e processamento

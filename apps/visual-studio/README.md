@@ -164,6 +164,26 @@ Para gerar 15 imagens no ComfyUI e montar um video no HomeLab com a mesma duraca
 python scripts\gerar_video_para_audio_remoto.py
 ```
 
+Por padrao, esse fluxo usa:
+
+```text
+workflow: lowvram-ksampler
+checkpoint: v1-5-pruned-emaonly.safetensors
+resolucao: 512x512
+```
+
+O checkpoint precisa existir no ComfyUI. Para usar outro modelo instalado:
+
+```powershell
+python scripts\gerar_video_para_audio_remoto.py --checkpoint nome_do_modelo.safetensors
+```
+
+Para voltar ao workflow SDXL Turbo:
+
+```powershell
+python scripts\gerar_video_para_audio_remoto.py --workflow sdxlturbo --checkpoint sd_xl_turbo_1.0_fp16.safetensors
+```
+
 Com plano opcional de sincronizacao:
 
 ```powershell
