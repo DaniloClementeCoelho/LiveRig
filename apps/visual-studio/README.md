@@ -120,6 +120,15 @@ http://127.0.0.1:8080/teleprompt
 http://127.0.0.1:8080/video
 ```
 
+Em outro computador, celular ou projetor na mesma rede Wi-Fi, troque
+`127.0.0.1` pelo IP local do computador que roda o LiveRig:
+
+```text
+http://SEU_IP_LOCAL:8080/
+http://SEU_IP_LOCAL:8080/teleprompt
+http://SEU_IP_LOCAL:8080/video
+```
+
 O teleprompt mostra letra atual, proxima linha e progresso. A tela de video mostra midias e cues visuais para o telao.
 
 ## Projeto piloto
