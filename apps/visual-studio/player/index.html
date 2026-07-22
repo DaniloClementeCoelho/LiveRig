@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LiveRig Visual Player</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main id="stage" class="stage">
+      <div id="visualLayer" class="visual-layer" aria-hidden="true"></div>
+
+      <section class="status" aria-live="polite">
+        <p id="songTitle" class="song-title">Carregando...</p>
+        <p id="sceneName" class="scene-name">Cena atual</p>
+        <p id="timecode" class="timecode">00:00.000</p>
+        <p id="syncStatus" class="sync-status">Modo local</p>
+      </section>
+
+      <nav class="controls" aria-label="Controles do player">
+        <button id="playButton" type="button">Play</button>
+        <button id="pauseButton" type="button">Pause</button>
+        <button id="stopButton" type="button">Stop</button>
+      </nav>
+    </main>
+
+    <script src="player.js"></script>
+  </body>
+</html>

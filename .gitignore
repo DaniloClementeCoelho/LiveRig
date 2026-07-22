@@ -20,9 +20,11 @@ venv/
 # Build
 build/
 dist/
+release/
 
 # PyInstaller
 *.spec
+!packaging/LiveRig.spec
 
 # Python cache
 .pytest_cache/

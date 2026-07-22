@@ -3,6 +3,10 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "apps" / "liverig"))
 
 from lyrics import LyricItem, LyricsTimeline
 from models import Song
@@ -137,9 +141,12 @@ class HttpServerTest(unittest.TestCase):
                 """,
                 encoding="utf-8",
             )
-            media_path = root / "media" / "video.mp4"
+            media_path = root / "Media" / "video.mp4"
             media_path.parent.mkdir()
             media_path.write_bytes(b"video")
+            visual_media = media_path.parent
+            (visual_media / "foto.jpg").write_bytes(b"image")
+            (visual_media / "loop.mp4").write_bytes(b"video")
             song = Song(
                 title="Song A",
                 artist="Artist",
@@ -153,9 +160,29 @@ class HttpServerTest(unittest.TestCase):
                         {
                             "start": 0,
                             "end": 30,
-                            "file": "media/video.mp4",
+                            "file": "Media/video.mp4",
                         }
-                    ]
+                    ],
+                    "visual_cues": [
+                        {
+                            "start": 30,
+                            "end": 45,
+                            "type": "message",
+                            "text": "CANTA COM A GENTE",
+                            "background": "Media/foto.jpg",
+                        },
+                        {
+                            "start": 45,
+                            "end": 60,
+                            "type": "lyrics",
+                        },
+                        {
+                            "start": 60,
+                            "end": 75,
+                            "type": "media",
+                            "file": "Media/loop.mp4",
+                        },
+                    ],
                 },
             )
             server = HttpServer()
@@ -172,8 +199,43 @@ class HttpServerTest(unittest.TestCase):
         self.assertEqual(payload["notes"], "notes")
         self.assertEqual(payload["lyrics"][0]["text"], "first line")
         self.assertEqual(payload["lyrics"][1]["start"], 3.0)
-        self.assertEqual(payload["videos"][0]["file"], "media/video.mp4")
-        self.assertEqual(payload["videos"][0]["src"], "/api/songs/Song%20A/media/media/video.mp4")
+        self.assertEqual(payload["videos"][0]["file"], "Media/video.mp4")
+        self.assertEqual(payload["videos"][0]["src"], "/api/songs/Song%20A/media/Media/video.mp4")
+        self.assertEqual(payload["visual"]["mode"], "auto")
+        self.assertEqual(payload["visual"]["shuffle_interval"], 12)
+        self.assertEqual(
+            payload["visual"]["media"],
+            [
+                {
+                    "type": "image",
+                    "file": "Media/foto.jpg",
+                    "src": "/api/songs/Song%20A/media/Media/foto.jpg",
+                },
+                {
+                    "type": "video",
+                    "file": "Media/loop.mp4",
+                    "src": "/api/songs/Song%20A/media/Media/loop.mp4",
+                },
+                {
+                    "type": "video",
+                    "file": "Media/video.mp4",
+                    "src": "/api/songs/Song%20A/media/Media/video.mp4",
+                },
+            ],
+        )
+        self.assertEqual(payload["visual"]["cues"][0]["type"], "message")
+        self.assertEqual(payload["visual"]["cues"][0]["background_media"]["type"], "image")
+        self.assertEqual(
+            payload["visual"]["cues"][0]["background_media"]["src"],
+            "/api/songs/Song%20A/media/Media/foto.jpg",
+        )
+        self.assertEqual(payload["visual"]["cues"][1]["type"], "lyrics")
+        self.assertEqual(payload["visual"]["cues"][2]["type"], "media")
+        self.assertEqual(payload["visual"]["cues"][2]["media"]["type"], "video")
+        self.assertEqual(
+            payload["visual"]["cues"][2]["media"]["src"],
+            "/api/songs/Song%20A/media/Media/loop.mp4",
+        )
 
     def test_song_media_path_stays_inside_song_folder(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

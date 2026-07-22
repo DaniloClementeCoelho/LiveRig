@@ -1,0 +1,135 @@
+{
+  "5": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Imagem Latente Vazia"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "A colossal futuristic city inside a vast underground cavern, waterfalls, suspended bridges, thousands of glowing windows, cinematic volumetric lighting, intricate architecture, ultra detailed, realistic, wide angle",
+      "clip": [
+        "20",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Codificação de Texto CLIP (Prompt)"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": "blurry, low quality, text, watermark",
+      "clip": [
+        "20",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Codificação de Texto CLIP (Prompt)"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "20",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decodificar"
+    }
+  },
+  "13": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 0,
+      "cfg": 2,
+      "model": [
+        "20",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "sampler": [
+        "14",
+        0
+      ],
+      "sigmas": [
+        "22",
+        0
+      ],
+      "latent_image": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "SamplerCustom",
+    "_meta": {
+      "title": "SamplerCustom"
+    }
+  },
+  "14": {
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "20": {
+    "inputs": {
+      "ckpt_name": "sd_xl_turbo_1.0_fp16.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Carregar Checkpoint"
+    }
+  },
+  "22": {
+    "inputs": {
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "SDTurboScheduler",
+    "_meta": {
+      "title": "SDTurboScheduler"
+    }
+  },
+  "27": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Salvar Imagem"
+    }
+  }
+}

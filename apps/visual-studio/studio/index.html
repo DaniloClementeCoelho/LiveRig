@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LiveRig Visual Studio</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <h1>LiveRig Visual Studio</h1>
+
+        <form id="generateForm" class="form">
+          <label>
+            Nome da musica
+            <input id="songName" name="songName" type="text" required placeholder="A Little Respect">
+          </label>
+
+          <label>
+            Prompt positivo
+            <textarea id="prompt" name="prompt" required rows="5" placeholder="neon retro synthpop stage visuals..."></textarea>
+          </label>
+
+          <label>
+            Prompt negativo
+            <textarea id="negativePrompt" name="negativePrompt" rows="3">blurry, low quality, text, watermark</textarea>
+          </label>
+
+          <button id="generateButton" type="submit">Gerar</button>
+        </form>
+
+        <p id="status" class="status">Aguardando prompt.</p>
+      </section>
+
+      <section class="preview">
+        <img id="previewImage" alt="">
+        <pre id="result"></pre>
+      </section>
+    </main>
+
+    <script src="studio.js"></script>
+  </body>
+</html>
