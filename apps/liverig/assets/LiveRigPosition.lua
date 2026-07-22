@@ -31,6 +31,7 @@ function Main()
 
     local playing = reaper.GetPlayState()
     local position = reaper.GetPlayPosition()
+    local track_count = reaper.CountTracks(0)
 
     local file, err = io.open(output_file, "w")
 
@@ -38,6 +39,8 @@ function Main()
         file:write(string.format("%.3f\n", position))
         file:write(string.format("%d\n", playing))
         file:write(string.format("%d\n", project_ready and 1 or 0))
+        file:write(project .. "\n")
+        file:write(string.format("%d\n", track_count))
         file:close()
     end
 

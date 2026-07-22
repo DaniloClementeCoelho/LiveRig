@@ -9,6 +9,8 @@ class PlaybackClock:
         self._last_position = 0.0
         self._last_playing = False
         self._last_project_ready = False
+        self._last_project_path = ""
+        self._last_track_count = 0
 
     def _read(self) -> None:
         try:
@@ -21,10 +23,14 @@ class PlaybackClock:
             position = float(lines[0].strip())
             playing = lines[1].strip() == "1"
             project_ready = lines[2].strip() == "1"
+            project_path = lines[3].strip() if len(lines) >= 4 else ""
+            track_count = int(lines[4].strip()) if len(lines) >= 5 else 0
 
             self._last_position = position
             self._last_playing = playing
             self._last_project_ready = project_ready
+            self._last_project_path = project_path
+            self._last_track_count = track_count
 
         except Exception:
             pass
@@ -40,3 +46,11 @@ class PlaybackClock:
     def project_ready(self) -> bool:
         self._read()
         return self._last_project_ready
+
+    def project_path(self) -> str:
+        self._read()
+        return self._last_project_path
+
+    def track_count(self) -> int:
+        self._read()
+        return self._last_track_count

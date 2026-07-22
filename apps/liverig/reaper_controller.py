@@ -56,6 +56,8 @@ class ReaperController:
         ready_checker: Optional[ReadyChecker] = None,
         window_minimizer: Optional[WindowMinimizer] = None,
         reaper_ready_timeout: float = 12.0,
+        project_ready_timeout: float = 5.0,
+        project_close_timeout: float = 5.0,
         project_load_minimize_seconds: float = 1.2,
     ) -> None:
         self._reaper_launcher = reaper_launcher or self._launch_reaper
@@ -64,6 +66,8 @@ class ReaperController:
         self._ready_checker = ready_checker or self._is_reaper_action_target_ready
         self._window_minimizer = window_minimizer or self._minimize_reaper_window
         self._reaper_ready_timeout = reaper_ready_timeout
+        self._project_ready_timeout = project_ready_timeout
+        self._project_close_timeout = project_close_timeout
         self._project_load_minimize_seconds = project_load_minimize_seconds
         self._process: Optional[subprocess.Popen] = None
         self._current_song: Optional[Song] = None
@@ -180,7 +184,10 @@ class ReaperController:
         if platform.system() == "Darwin":
             self._close_current_project()
         else:
-            self._action_sender(ACTION_CLOSE_PROJECT)
+            previous_project_path = self._clock.project_path()
+            if not self._action_sender(ACTION_CLOSE_PROJECT):
+                raise RuntimeError("REAPER nao aceitou fechar o projeto atual.")
+            self._wait_until_project_closed(previous_project_path)
 
         self._current_song = None
         self._playing = False
@@ -288,14 +295,27 @@ class ReaperController:
 
 
     def _wait_until_project_loaded(self):
-        deadline = time.time() + 20
+        deadline = time.monotonic() + self._project_ready_timeout
 
-        while time.time() < deadline:
+        while time.monotonic() < deadline:
             if self._clock.project_ready():
                 return
             time.sleep(0.01)
 
         raise RuntimeError("Projeto não ficou pronto.")
+
+    def _wait_until_project_closed(self, previous_project_path: str) -> None:
+        if not previous_project_path:
+            return
+
+        deadline = time.monotonic() + self._project_close_timeout
+
+        while time.monotonic() < deadline:
+            if self._clock.project_path() != previous_project_path:
+                return
+            time.sleep(0.01)
+
+        raise RuntimeError("Projeto anterior nao fechou a tempo.")
 
     def _send_action_or_raise(self, action_id: int) -> None:
         if not self._action_sender(action_id):

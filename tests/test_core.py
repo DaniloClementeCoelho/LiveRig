@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 import sys
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "apps" / "liverig"))
@@ -12,6 +13,7 @@ from lyrics import LyricItem, LyricsTimeline
 from models import Song
 from network.http_server import HttpServer
 from playback.playback_state import PlaybackState
+from reaper_controller import ACTION_CLOSE_PROJECT, ACTION_GO_TO_MARKER_1, ACTION_PLAY, ReaperController
 from song_manager import SongManager
 
 
@@ -110,6 +112,64 @@ class LyricsTimelineTest(unittest.TestCase):
         self.assertIsNone(timeline.current(0.5))
         self.assertEqual(timeline.current(1.5).text, "first")
         self.assertEqual(timeline.current(5.0).text, "second")
+
+
+class FakePlaybackClock:
+    def __init__(self, project_paths: list[str]) -> None:
+        self.project_paths = project_paths
+        self.loaded_checks = 0
+
+    def project_path(self) -> str:
+        if len(self.project_paths) > 1:
+            return self.project_paths.pop(0)
+        return self.project_paths[0]
+
+    def project_ready(self) -> bool:
+        self.loaded_checks += 1
+        return True
+
+
+class ReaperControllerTest(unittest.TestCase):
+    def test_waits_for_previous_project_to_close_before_opening_next(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            old_project = root / "old.rpp"
+            new_project = root / "new.rpp"
+            old_project.write_text("<REAPER_PROJECT>\n", encoding="utf-8")
+            new_project.write_text("<REAPER_PROJECT>\n", encoding="utf-8")
+            old_song = Song(title="Old", artist="", folder=root, project_path=old_project)
+            new_song = Song(title="New", artist="", folder=root, project_path=new_project)
+            events = []
+
+            def send_action(action_id: int) -> bool:
+                events.append(("action", action_id))
+                return True
+
+            def launch_project(project_path: Path):
+                events.append(("launch", project_path))
+                return None
+
+            with patch("reaper_controller.platform.system", return_value="Windows"):
+                controller = ReaperController(
+                    project_launcher=launch_project,
+                    action_sender=send_action,
+                    ready_checker=lambda: True,
+                    window_minimizer=lambda: None,
+                )
+                controller._clock = FakePlaybackClock([str(old_project), ""])
+                controller._current_song = old_song
+
+                controller.play_from_start(new_song)
+
+        self.assertEqual(
+            events,
+            [
+                ("action", ACTION_CLOSE_PROJECT),
+                ("launch", new_project),
+                ("action", ACTION_GO_TO_MARKER_1),
+                ("action", ACTION_PLAY),
+            ],
+        )
 
 
 class HttpServerTest(unittest.TestCase):
