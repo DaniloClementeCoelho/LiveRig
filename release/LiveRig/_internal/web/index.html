@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveRig Visual Sync</title>
+
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #070808;
+            --panel: rgba(18, 20, 22, 0.78);
+            --text: #f3f4ef;
+            --muted: #a7aba2;
+            --dim: #676d65;
+            --accent: #d7ff64;
+            --warning: #ffb86b;
+            --danger: #ff6b6b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            min-width: 320px;
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 24px;
+            align-items: center;
+            padding: 22px 28px 0;
+            min-height: 88px;
+        }
+
+        .song {
+            min-width: 0;
+        }
+
+        .title {
+            margin: 0;
+            overflow: hidden;
+            color: var(--text);
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0;
+            line-height: 1.18;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .artist {
+            margin-top: 5px;
+            overflow: hidden;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.35;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 158px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.3;
+            text-align: right;
+        }
+
+        .status::before {
+            width: 9px;
+            height: 9px;
+            margin-right: 9px;
+            border-radius: 50%;
+            background: var(--warning);
+            content: "";
+        }
+
+        .status.connected::before {
+            background: var(--accent);
+        }
+
+        .status.error::before {
+            background: var(--danger);
+        }
+
+        .stage {
+            display: grid;
+            grid-template-rows: minmax(260px, 1fr) minmax(72px, auto);
+            gap: 24px;
+            align-items: center;
+            padding: 22px clamp(24px, 6vw, 86px);
+            min-height: 0;
+        }
+
+        .lyric {
+            overflow: hidden;
+            width: 100%;
+            max-width: 1260px;
+            margin: 0 auto;
+            text-align: center;
+            text-wrap: balance;
+            white-space: pre-wrap;
+        }
+
+        .lyric.next {
+            color: var(--dim);
+            font-size: clamp(20px, 3vh, 32px);
+            font-weight: 600;
+            line-height: 1.18;
+            max-height: 26vh;
+        }
+
+        .lyric.current {
+            color: var(--text);
+            font-size: clamp(48px, 8vh, 92px);
+            font-weight: 800;
+            line-height: 1.08;
+            max-height: 48vh;
+            padding: 8px 0;
+        }
+
+        .footer {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 18px;
+            align-items: center;
+            padding: 0 28px 22px;
+            color: var(--muted);
+            font-size: 14px;
+            min-height: 58px;
+        }
+
+        .progress {
+            position: relative;
+            height: 6px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #272b29;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--accent);
+            transition: width 80ms linear;
+        }
+
+        .time {
+            min-width: 96px;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+
+        @media (max-width: 720px) {
+            .topbar {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                padding: 18px 18px 0;
+            }
+
+            .status {
+                justify-content: flex-start;
+                text-align: left;
+            }
+
+            .stage {
+                grid-template-rows: minmax(210px, 1fr) minmax(54px, auto);
+                gap: 16px;
+                padding: 18px;
+            }
+
+            .lyric.next {
+                font-size: 20px;
+                max-height: 22vh;
+            }
+
+            .lyric.current {
+                font-size: clamp(38px, 8vh, 64px);
+                max-height: 50vh;
+            }
+
+            .footer {
+                grid-template-columns: 1fr;
+                padding: 0 18px 18px;
+            }
+
+            .time {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="song">
+            <h1 class="title" id="title">LiveRig</h1>
+            <div class="artist" id="artist">Aguardando musica</div>
+        </div>
+        <div class="status" id="status">Conectando</div>
+    </header>
+
+    <main class="stage">
+        <div class="lyric current" id="currentLyric">...</div>
+        <div class="lyric next" id="nextLyric"></div>
+    </main>
+
+    <footer class="footer">
+        <div class="progress" aria-hidden="true">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="time" id="time">0:00</div>
+    </footer>
+
+    <script>
+        const title = document.getElementById("title");
+        const artist = document.getElementById("artist");
+        const status = document.getElementById("status");
+        const currentLyric = document.getElementById("currentLyric");
+        const nextLyric = document.getElementById("nextLyric");
+        const progressBar = document.getElementById("progressBar");
+        const time = document.getElementById("time");
+
+        let playback = {
+            playing: false,
+            position: 0,
+            current_song_id: null,
+            current_song_title: null,
+        };
+        let song = null;
+        let loadedSongId = null;
+        let loadingSongId = null;
+        let receivedAt = performance.now();
+        let currentLyricIndex = null;
+
+        function setStatus(text, mode) {
+            status.textContent = text;
+            status.classList.remove("connected", "error");
+            if (mode) {
+                status.classList.add(mode);
+            }
+        }
+
+        function updatePlayback(payload) {
+            playback = payload;
+            receivedAt = performance.now();
+
+            if (!payload.current_song_id) {
+                clearSong();
+                return;
+            }
+
+            if (payload.current_song_id !== loadedSongId) {
+                loadSong(payload.current_song_id);
+            }
+        }
+
+        async function loadSong(songId) {
+            if (!songId || loadingSongId === songId) {
+                return;
+            }
+
+            loadingSongId = songId;
+            setStatus("Carregando musica", "connected");
+
+            try {
+                const response = await fetch(`/api/songs/${encodeURIComponent(songId)}/sync`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const nextSong = await response.json();
+                if (playback.current_song_id !== songId) {
+                    return;
+                }
+
+                song = nextSong;
+                loadedSongId = songId;
+                currentLyricIndex = null;
+
+                title.textContent = song.title || playback.current_song_title || "LiveRig";
+                artist.textContent = song.artist || "";
+                setStatus("Conectado", "connected");
+            } catch (error) {
+                song = null;
+                loadedSongId = null;
+                currentLyricIndex = null;
+                title.textContent = playback.current_song_title || "LiveRig";
+                artist.textContent = "";
+                currentLyric.textContent = "Sem dados de sync";
+                nextLyric.textContent = "";
+                setStatus("Erro ao carregar", "error");
+            } finally {
+                loadingSongId = null;
+            }
+        }
+
+        function clearSong() {
+            song = null;
+            loadedSongId = null;
+            loadingSongId = null;
+            currentLyricIndex = null;
+            title.textContent = "LiveRig";
+            artist.textContent = "Aguardando musica";
+            currentLyric.textContent = "...";
+            nextLyric.textContent = "";
+            progressBar.style.width = "0%";
+        }
+
+        function visualPosition() {
+            const base = Number(playback.position) || 0;
+            if (!playback.playing) {
+                return base;
+            }
+
+            return base + ((performance.now() - receivedAt) / 1000);
+        }
+
+        function lyricIndexAt(position) {
+            if (!song || !Array.isArray(song.lyrics) || song.lyrics.length === 0) {
+                return null;
+            }
+
+            let index = null;
+            for (let i = 0; i < song.lyrics.length; i += 1) {
+                if (song.lyrics[i].start <= position) {
+                    index = i;
+                } else {
+                    break;
+                }
+            }
+
+            return index;
+        }
+
+        function updateLyrics(position) {
+            const index = lyricIndexAt(position);
+
+            if (index === currentLyricIndex) {
+                return;
+            }
+
+            currentLyricIndex = index;
+
+            if (index === null || !song || !song.lyrics[index]) {
+                currentLyric.textContent = song ? "" : "...";
+                nextLyric.textContent = song && song.lyrics[0] ? song.lyrics[0].text : "";
+                return;
+            }
+
+            currentLyric.textContent = song.lyrics[index].text || "";
+            nextLyric.textContent = song.lyrics[index + 1]?.text || "";
+        }
+
+        function updateProgress(position) {
+            const duration = Number(song?.duration) || 0;
+            const percent = duration > 0
+                ? Math.max(0, Math.min(100, (position / duration) * 100))
+                : 0;
+
+            progressBar.style.width = `${percent}%`;
+            time.textContent = formatTime(position);
+        }
+
+        function formatTime(seconds) {
+            const value = Math.max(0, Math.floor(seconds || 0));
+            const minutes = Math.floor(value / 60);
+            const remaining = value % 60;
+            return `${minutes}:${String(remaining).padStart(2, "0")}`;
+        }
+
+        function frame() {
+            const position = visualPosition();
+            updateLyrics(position);
+            updateProgress(position);
+            requestAnimationFrame(frame);
+        }
+
+        function connect() {
+            const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+            const ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+            ws.onopen = () => {
+                setStatus("Conectado", "connected");
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.type === "playback_state") {
+                    updatePlayback(message.payload);
+                }
+            };
+
+            ws.onclose = () => {
+                setStatus("Desconectado", "error");
+                window.setTimeout(connect, 1000);
+            };
+
+            ws.onerror = () => {
+                setStatus("Erro de conexao", "error");
+            };
+        }
+
+        connect();
+        requestAnimationFrame(frame);
+    </script>
+</body>
+
+</html>

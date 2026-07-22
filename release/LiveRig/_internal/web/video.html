@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveRig Video Sync</title>
+
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #000;
+            --text: #f4f4f0;
+            --muted: #aeb3aa;
+            --accent: #d7ff64;
+            --danger: #ff6b6b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            position: relative;
+        }
+
+        video {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            object-fit: cover;
+        }
+
+        .image {
+            position: fixed;
+            inset: 0;
+            display: none;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .backdrop {
+            position: fixed;
+            inset: 0;
+            background-image: url("/pano_de_fundo.jpg");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .hud {
+            position: fixed;
+            left: 24px;
+            right: 24px;
+            bottom: 22px;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 18px;
+            align-items: end;
+            color: var(--muted);
+            text-shadow: 0 2px 10px #000;
+        }
+
+        .song {
+            min-width: 0;
+        }
+
+        .title {
+            overflow: hidden;
+            color: var(--text);
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.2;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .detail {
+            margin-top: 4px;
+            overflow: hidden;
+            font-size: 14px;
+            line-height: 1.35;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 150px;
+            font-size: 14px;
+            line-height: 1.3;
+            text-align: right;
+        }
+
+        .status::before {
+            width: 9px;
+            height: 9px;
+            margin-right: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+            content: "";
+        }
+
+        .status.error::before {
+            background: var(--danger);
+        }
+
+        .fullscreen-button {
+            display: inline-grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            border: 1px solid rgba(244, 244, 240, 0.28);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.34);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 22px;
+            line-height: 1;
+            text-shadow: none;
+        }
+
+        .fullscreen-button:hover {
+            border-color: rgba(244, 244, 240, 0.56);
+            background: rgba(0, 0, 0, 0.52);
+        }
+
+        .empty {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            padding: 32px;
+            color: var(--muted);
+            font-size: clamp(28px, 5vw, 64px);
+            font-weight: 700;
+            line-height: 1.1;
+            text-align: center;
+        }
+
+        .cue-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            padding: clamp(32px, 8vw, 120px);
+            color: var(--text);
+            font-size: clamp(46px, 8vw, 118px);
+            font-weight: 900;
+            line-height: 1.05;
+            text-align: center;
+            text-shadow: 0 4px 24px #000, 0 1px 2px #000;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 720px) {
+            .hud {
+                left: 16px;
+                right: 16px;
+                bottom: 16px;
+                grid-template-columns: 1fr auto;
+                gap: 8px;
+            }
+
+            .status {
+                grid-column: 1 / -1;
+                grid-row: 2;
+                justify-content: flex-start;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <img class="image" id="image" alt="">
+    <video id="video" muted playsinline preload="auto"></video>
+    <div class="empty" id="empty"></div>
+    <div class="cue-overlay" id="cueOverlay"></div>
+
+    <aside class="hud">
+        <div class="song">
+            <div class="title" id="title">LiveRig Video</div>
+            <div class="detail" id="detail">Aguardando musica</div>
+        </div>
+        <div class="status" id="status">Conectando</div>
+        <button class="fullscreen-button" id="fullscreenButton" type="button" title="Tela cheia" aria-label="Tela cheia">FS</button>
+    </aside>
+
+    <script>
+        const video = document.getElementById("video");
+        const image = document.getElementById("image");
+        const backdrop = document.getElementById("backdrop");
+        const empty = document.getElementById("empty");
+        const cueOverlay = document.getElementById("cueOverlay");
+        const title = document.getElementById("title");
+        const detail = document.getElementById("detail");
+        const status = document.getElementById("status");
+        const fullscreenButton = document.getElementById("fullscreenButton");
+
+        let playback = {
+            playing: false,
+            position: 0,
+            current_song_id: null,
+            current_song_title: null,
+        };
+        let song = null;
+        let loadedSongId = null;
+        let loadingSongId = null;
+        let receivedAt = performance.now();
+        let currentClipIndex = null;
+        let currentAutoIndex = null;
+        let currentAutoSlot = null;
+        let currentCueKey = null;
+
+        function setStatus(text, mode) {
+            status.textContent = text;
+            status.classList.toggle("error", mode === "error");
+        }
+
+        function updatePlayback(payload) {
+            playback = payload;
+            receivedAt = performance.now();
+
+            if (!payload.current_song_id) {
+                clearSong();
+                return;
+            }
+
+            if (payload.current_song_id !== loadedSongId) {
+                loadSong(payload.current_song_id);
+            }
+        }
+
+        async function loadSong(songId) {
+            if (!songId || loadingSongId === songId) {
+                return;
+            }
+
+            loadingSongId = songId;
+            setStatus("Carregando");
+
+            try {
+                const response = await fetch(`/api/songs/${encodeURIComponent(songId)}/sync`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const nextSong = await response.json();
+                if (playback.current_song_id !== songId) {
+                    return;
+                }
+
+                song = nextSong;
+                loadedSongId = songId;
+                currentClipIndex = null;
+                currentAutoIndex = null;
+                currentAutoSlot = null;
+                currentCueKey = null;
+                title.textContent = song.title || playback.current_song_title || "LiveRig Video";
+                detail.textContent = song.artist || "";
+                setStatus("Conectado");
+            } catch (error) {
+                song = null;
+                loadedSongId = null;
+                currentClipIndex = null;
+                currentAutoIndex = null;
+                currentAutoSlot = null;
+                currentCueKey = null;
+                video.removeAttribute("src");
+                video.load();
+                showFallback();
+                title.textContent = playback.current_song_title || "LiveRig Video";
+                detail.textContent = "";
+                setStatus("Erro ao carregar", "error");
+            } finally {
+                loadingSongId = null;
+            }
+        }
+
+        function clearSong() {
+            song = null;
+            loadedSongId = null;
+            loadingSongId = null;
+            currentClipIndex = null;
+            currentAutoIndex = null;
+            currentAutoSlot = null;
+            currentCueKey = null;
+            video.removeAttribute("src");
+            video.load();
+            showFallback();
+            title.textContent = "LiveRig Video";
+            detail.textContent = "Aguardando musica";
+        }
+
+        function visualPosition() {
+            const base = Number(playback.position) || 0;
+            if (!playback.playing) {
+                return base;
+            }
+
+            return base + ((performance.now() - receivedAt) / 1000);
+        }
+
+        function clipIndexAt(position) {
+            if (!song || !Array.isArray(song.videos) || song.videos.length === 0) {
+                return null;
+            }
+
+            for (let i = 0; i < song.videos.length; i += 1) {
+                const clip = song.videos[i];
+                const start = Number(clip.start) || 0;
+                const end = Number(clip.end) || Number(song.duration) || Infinity;
+                if (start <= position && position < end) {
+                    return i;
+                }
+            }
+
+            return null;
+        }
+
+        function updateVideo(position) {
+            const cue = cueAt(position);
+            if (cue) {
+                updateCue(cue, position);
+                return;
+            }
+
+            currentCueKey = null;
+            hideCueOverlay();
+
+            const index = clipIndexAt(position);
+
+            if (index === null || !song || !song.videos[index]) {
+                currentClipIndex = null;
+                updateAutoVisual(position);
+                return;
+            }
+
+            currentAutoIndex = null;
+            currentAutoSlot = null;
+
+            const clip = song.videos[index];
+            const start = Number(clip.start) || 0;
+            const expectedTime = Math.max(0, position - start);
+
+            if (currentClipIndex !== index) {
+                currentClipIndex = index;
+                video.loop = false;
+                video.src = clip.src;
+                video.currentTime = expectedTime;
+                showVideo();
+            }
+
+            const drift = Math.abs(video.currentTime - expectedTime);
+            if (Number.isFinite(expectedTime) && drift > 0.25) {
+                video.currentTime = expectedTime;
+            }
+
+            if (playback.playing) {
+                const promise = video.play();
+                if (promise) {
+                    promise.catch(() => {
+                        setStatus("Clique para liberar video", "error");
+                    });
+                }
+            } else if (!video.paused) {
+                video.pause();
+            }
+        }
+
+        function cueAt(position) {
+            const cues = song?.visual?.cues;
+            if (!Array.isArray(cues) || cues.length === 0) {
+                return null;
+            }
+
+            for (const cue of cues) {
+                const start = Number(cue.start);
+                const end = Number(cue.end);
+                if (!Number.isFinite(start) || !Number.isFinite(end)) {
+                    continue;
+                }
+
+                if (start <= position && position < end) {
+                    return cue;
+                }
+            }
+
+            return null;
+        }
+
+        function updateCue(cue, position) {
+            const key = `${cue.type}:${cue.start}:${cue.end}:${cue.text || ""}:${cue.file || ""}:${cue.background || ""}`;
+            const firstFrame = currentCueKey !== key;
+            currentCueKey = key;
+            currentClipIndex = null;
+            currentAutoIndex = null;
+            currentAutoSlot = null;
+
+            if (cue.type === "media") {
+                hideCueOverlay();
+                showCueMedia(cue.media, position, Number(cue.start) || 0, firstFrame);
+                return;
+            }
+
+            const background = cue.background_media || null;
+            if (background) {
+                showCueMedia(background, position, Number(cue.start) || 0, firstFrame);
+            } else if (firstFrame) {
+                video.removeAttribute("src");
+                video.load();
+                showFallback();
+            }
+
+            if (cue.type === "message") {
+                showCueText(cue.text || "");
+                return;
+            }
+
+            if (cue.type === "lyrics") {
+                showCueText(currentLyricText(position));
+            }
+        }
+
+        function showCueMedia(media, position, start, firstFrame) {
+            if (!media || !media.src) {
+                showFallback();
+                return;
+            }
+
+            if (media.type === "image") {
+                image.src = media.src;
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+                showImage();
+                return;
+            }
+
+            if (media.type === "video") {
+                const expectedTime = Math.max(0, position - start);
+                if (firstFrame || video.src !== absoluteUrl(media.src)) {
+                    video.loop = false;
+                    video.src = media.src;
+                    video.currentTime = expectedTime;
+                    showVideo();
+                }
+
+                const drift = Math.abs(video.currentTime - expectedTime);
+                if (Number.isFinite(expectedTime) && drift > 0.25) {
+                    video.currentTime = expectedTime;
+                }
+
+                if (playback.playing) {
+                    const promise = video.play();
+                    if (promise) {
+                        promise.catch(() => {
+                            setStatus("Clique para liberar video", "error");
+                        });
+                    }
+                } else if (!video.paused) {
+                    video.pause();
+                }
+                return;
+            }
+
+            showFallback();
+        }
+
+        function currentLyricText(position) {
+            const lyrics = song?.lyrics;
+            if (!Array.isArray(lyrics) || lyrics.length === 0) {
+                return "";
+            }
+
+            let current = null;
+            for (const item of lyrics) {
+                if (item.start <= position) {
+                    current = item;
+                } else {
+                    break;
+                }
+            }
+
+            return current?.text || "";
+        }
+
+        function showCueText(text) {
+            cueOverlay.textContent = text;
+            cueOverlay.style.display = text ? "grid" : "none";
+        }
+
+        function hideCueOverlay() {
+            cueOverlay.textContent = "";
+            cueOverlay.style.display = "none";
+        }
+
+        function absoluteUrl(src) {
+            return new URL(src, location.href).href;
+        }
+
+        function updateAutoVisual(position) {
+            const media = autoMedia();
+            if (media.length === 0) {
+                video.removeAttribute("src");
+                video.load();
+                showFallback();
+                return;
+            }
+
+            const interval = Number(song?.visual?.shuffle_interval) || 12;
+            const slot = Math.floor(Math.max(0, position) / Math.max(1, interval));
+
+            if (currentAutoSlot !== slot || currentAutoIndex === null) {
+                currentAutoSlot = slot;
+                currentAutoIndex = randomMediaIndex(media, currentAutoIndex);
+                showAutoMedia(media[currentAutoIndex]);
+            }
+
+            if (media[currentAutoIndex]?.type === "video") {
+                if (playback.playing) {
+                    const promise = video.play();
+                    if (promise) {
+                        promise.catch(() => {
+                            setStatus("Clique para liberar video", "error");
+                        });
+                    }
+                } else if (!video.paused) {
+                    video.pause();
+                }
+            }
+        }
+
+        function autoMedia() {
+            const media = song?.visual?.media;
+            return Array.isArray(media) ? media : [];
+        }
+
+        function randomMediaIndex(media, previousIndex) {
+            if (media.length <= 1) {
+                return 0;
+            }
+
+            let index = previousIndex;
+            while (index === previousIndex) {
+                index = Math.floor(Math.random() * media.length);
+            }
+
+            return index;
+        }
+
+        function showAutoMedia(media) {
+            if (!media || !media.src) {
+                showFallback();
+                return;
+            }
+
+            if (media.type === "image") {
+                image.src = media.src;
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+                showImage();
+                return;
+            }
+
+            if (media.type === "video") {
+                video.loop = true;
+                video.src = media.src;
+                video.currentTime = 0;
+                showVideo();
+                return;
+            }
+
+            showFallback();
+        }
+
+        function frame() {
+            updateVideo(visualPosition());
+            requestAnimationFrame(frame);
+        }
+
+        function showFallback() {
+            video.style.display = "none";
+            image.style.display = "none";
+            backdrop.style.display = "block";
+            empty.style.display = "none";
+        }
+
+        function showImage() {
+            backdrop.style.display = "none";
+            video.style.display = "none";
+            image.style.display = "block";
+            empty.style.display = "none";
+        }
+
+        function showVideo() {
+            backdrop.style.display = "none";
+            image.style.display = "none";
+            video.style.display = "block";
+            empty.style.display = "none";
+        }
+
+        function connect() {
+            const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+            const ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+            ws.onopen = () => {
+                setStatus("Conectado");
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.type === "playback_state") {
+                    updatePlayback(message.payload);
+                }
+            };
+
+            ws.onclose = () => {
+                setStatus("Desconectado", "error");
+                window.setTimeout(connect, 1000);
+            };
+
+            ws.onerror = () => {
+                setStatus("Erro de conexao", "error");
+            };
+        }
+
+        async function toggleFullscreen() {
+            try {
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen();
+                } else {
+                    await document.documentElement.requestFullscreen();
+                }
+            } catch (error) {
+                setStatus("Tela cheia indisponivel", "error");
+            }
+        }
+
+        function updateFullscreenButton() {
+            const fullscreen = Boolean(document.fullscreenElement);
+            fullscreenButton.textContent = fullscreen ? "X" : "FS";
+            fullscreenButton.title = fullscreen ? "Sair da tela cheia" : "Tela cheia";
+            fullscreenButton.setAttribute(
+                "aria-label",
+                fullscreen ? "Sair da tela cheia" : "Tela cheia"
+            );
+        }
+
+        document.addEventListener("click", () => {
+            if (playback.playing) {
+                video.play().catch(() => {});
+            }
+        });
+        document.addEventListener("fullscreenchange", updateFullscreenButton);
+        fullscreenButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            toggleFullscreen();
+        });
+
+        connect();
+        showFallback();
+        updateFullscreenButton();
+        requestAnimationFrame(frame);
+    </script>
+</body>
+
+</html>
