@@ -1,12 +1,16 @@
 # LiveRig
 
 Ecossistema para preparar projetos do REAPER, tocar shows ao vivo com sincronismo e criar/operar recursos visuais.
+para Executar no terminal :  python ".\apps\liverig\main.py" 
 
 ## Componentes
 
 - `apps/liverig`: programa principal usado na performance.
-- `apps/rpp-preparer`: preparador/importador de projetos `.rpp` para o formato do LiveRig.
-- `apps/visual-studio`: ferramentas visuais, workflows e player/studio web.
+- `apps/rpp-preparer`: preparador/importador de projetos de audio para o formato do LiveRig.
+- `apps/visual-studio`: superficies web de teleprompt e video, studio visual e scripts de geracao. consultar 
+        D:\Projetos AI\LiveRig\apps\visual-studio\teleprompt e 
+        D:\Projetos AI\LiveRig\apps\visual-studio\video
+
 - `packaging`: build, PyInstaller, instalador Windows e controle de versao de release.
 - `docs`: documentacao geral do projeto.
 - `tests`: testes automatizados compartilhados.
