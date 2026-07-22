@@ -25,7 +25,8 @@ a = Analysis(
     binaries=[],
     datas=[
         ('../apps/liverig/assets', 'assets'),
-        ('../apps/liverig/web', 'web'),
+        ('../apps/visual-studio/teleprompt', 'visual-studio/teleprompt'),
+        ('../apps/visual-studio/video', 'visual-studio/video'),
         ('../apps/liverig/pano_de_fundo.jpg', '.'),
     ],
     hiddenimports=hiddenimports,

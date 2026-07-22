@@ -91,17 +91,30 @@ class HttpServer:
 
             return payload
 
-        web_folder = Path(__file__).resolve().parent.parent / "web"
+        liverig_folder = Path(__file__).resolve().parents[1]
+        apps_folder = Path(__file__).resolve().parents[2]
+        teleprompt_folder = apps_folder / "visual-studio" / "teleprompt"
+        video_folder = apps_folder / "visual-studio" / "video"
+
+        @self._app.get("/")
+        async def teleprompt_root_endpoint():
+
+            return FileResponse(teleprompt_folder / "index.html")
+
+        @self._app.get("/teleprompt")
+        async def teleprompt_endpoint():
+
+            return FileResponse(teleprompt_folder / "index.html")
 
         @self._app.get("/video")
         async def video_endpoint():
 
-            return FileResponse(web_folder / "video.html")
+            return FileResponse(video_folder / "index.html")
 
         @self._app.get("/pano_de_fundo.jpg")
         async def video_background_endpoint():
 
-            background = web_folder.parent / "pano_de_fundo.jpg"
+            background = liverig_folder / "pano_de_fundo.jpg"
             if not background.exists() or not background.is_file():
                 raise HTTPException(status_code=404, detail="Pano de fundo nao encontrado.")
 
@@ -119,7 +132,7 @@ class HttpServer:
         self._app.mount(
             "/",
             StaticFiles(
-                directory=web_folder,
+                directory=teleprompt_folder,
                 html=True,
             ),
             name="web",
