@@ -9,6 +9,8 @@ O objetivo do projeto e preparar conteudo visual por musica: manifestos de cenas
 O MVP inicial ja possui:
 
 - player web local em `player/`;
+- teleprompt web em `teleprompt/`;
+- tela de video/telao em `video/`;
 - renderizacao de cenas do tipo `color`, `image` e `video`;
 - manifesto piloto em `projects/a-little-respect/orquestrador.json`;
 - sincronizacao opcional com o LiveRig via `ws://127.0.0.1:8080/ws`;
@@ -18,7 +20,7 @@ O MVP inicial ja possui:
 - geracao de imagem via ComfyUI;
 - consulta de historico e proxy de imagem gerada;
 - registro de imagem remota gerada no HomeLab sem download automatico;
-- registro de imagem gerada como asset em `projects/{project_id}/assets.json`.
+- registro de imagem gerada como asset em `projects/{project_id}/assets.json`;
 - interface grafica simples em `studio/` para gerar imagens no HomeLab por musica.
 
 ## Executando a API
@@ -107,6 +109,18 @@ http://127.0.0.1:8000/player/index.html
 ```
 
 Sem o LiveRig aberto, o player funciona em modo local. Com o LiveRig aberto, ele tenta sincronizar pelo WebSocket local do LiveRig.
+
+## Executando teleprompt e telao
+
+Com o LiveRig aberto, acesse:
+
+```text
+http://127.0.0.1:8080/
+http://127.0.0.1:8080/teleprompt
+http://127.0.0.1:8080/video
+```
+
+O teleprompt mostra letra atual, proxima linha e progresso. A tela de video mostra midias e cues visuais para o telao.
 
 ## Projeto piloto
 
