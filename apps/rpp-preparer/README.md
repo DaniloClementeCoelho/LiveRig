@@ -1,12 +1,11 @@
 # RPP Preparer
 
-Ferramenta para preparar projetos `.rpp` do REAPER para uso no LiveRig.
-
 ## Executando
 
 ```powershell
-python apps\rpp-preparer\main.py musica.rpp --output shows
+python apps\rpp-preparer\main.py "D:\Projetos AI\teste audio\a little respect.wav" --output musicas_novas
 ```
+Ele sempre pergunta no terminal o titulo e o artista para inserir a musica nova no banco de dados
 
 ## Configuracao
 

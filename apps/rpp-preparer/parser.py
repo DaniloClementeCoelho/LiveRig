@@ -37,7 +37,7 @@ def parse_rpp(path: Path) -> Song:
     duration_end = max((item.end for item in all_items), default=start_position)
     duration = max(0, round(duration_end - start_position))
     bpm = _extract_bpm(text)
-    source_name = _source_name(path)
+    source_name = _source_name(path, media_files)
     title = _extract_marker_title(text, start_position) or source_name
     metadata = catalog.get(source_name)
     warnings = _build_warnings(tracks, audio_track, lyric_track)
@@ -212,7 +212,9 @@ def _parse_tracks(text: str) -> list[dict[str, object]]:
     return tracks
 
 
-def _source_name(path: Path) -> str:
+def _source_name(path: Path, media_files: list[str]) -> str:
+    if path.stem.casefold() in {"project", "projeto"} and media_files:
+        return Path(media_files[0]).stem
     if path.stem.casefold() in {"project", "projeto"} and path.parent.name:
         return path.parent.name
     return path.stem
@@ -376,8 +378,7 @@ def _project_setting_insert_index(lines: list[str]) -> int:
 
 
 def _start_marker_line(song: Song, newline: str) -> str:
-    name = _escape_marker_name(f"START - {song.title}")
-    return f'  MARKER 1 {_format_float(song.start_position)} "{name}" 0 0 1{newline}'
+    return f'  MARKER 1 {_format_float(song.start_position)} "Start" 0 0 1{newline}'
 
 
 def _cursor_line(song: Song, newline: str) -> str:

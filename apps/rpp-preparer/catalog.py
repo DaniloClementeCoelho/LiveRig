@@ -27,14 +27,12 @@ class MusicCatalog:
 
     def get(self, folder_name: str) -> dict[str, str]:
         key = self.normalize(folder_name)
-        if key in self.db:
-            return self.db[key]
         return self.learn(key)
 
     def learn(self, key: str) -> dict[str, str]:
         print()
         print("=" * 60)
-        print("Nova musica encontrada")
+        print("Dados da musica")
         print("=" * 60)
         print(f"Arquivo : {key}")
         print()

@@ -9,9 +9,11 @@ import sys
 try:
     from .importer import import_song
     from .parser import parse_rpp, start_marker_position
+    from .rpp_builder import create_project_from_audio, is_audio_file
 except ImportError:
     from importer import import_song
     from parser import parse_rpp, start_marker_position
+    from rpp_builder import create_project_from_audio, is_audio_file
 
 
 DEFAULT_CONFIG = Path(__file__).resolve().parent / "config.local.json"
@@ -20,14 +22,14 @@ OUTPUT_ENV_VAR = "LIVERIG_IMPORTER_OUTPUT_DIR"
 
 def main() -> int:
     parser = ArgumentParser(
-        description="Importa projetos .rpp de 3 tracks para o formato de pacote do LiveRig."
+        description="Importa projetos .rpp ou audio para o formato de pacote do LiveRig."
     )
     parser.add_argument(
         "source",
         nargs="?",
         default=Path.cwd() / "input",
         type=Path,
-        help="Arquivo .rpp ou pasta contendo arquivos .rpp. Padrao: ./input",
+        help="Arquivo .rpp, arquivo de audio ou pasta contendo arquivos .rpp. Padrao: ./input",
     )
     parser.add_argument(
         "-o",
@@ -53,7 +55,7 @@ def main() -> int:
 
     sources = _find_sources(args.source)
     if not sources:
-        print(f"Nenhum .rpp encontrado em: {args.source}")
+        print(f"Nenhum .rpp ou audio suportado encontrado em: {args.source}")
         return 1
 
     output = _resolve_output(args.output, args.config)
@@ -81,6 +83,9 @@ def main() -> int:
 def _find_sources(source: Path) -> list[Path]:
     if source.is_file() and source.suffix.casefold() == ".rpp":
         return [source]
+
+    if is_audio_file(source):
+        return [create_project_from_audio(source)]
 
     if source.is_dir():
         return sorted(
