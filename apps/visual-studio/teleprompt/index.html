@@ -370,11 +370,12 @@
             }
 
             currentLyric.textContent = song.lyrics[index].text || "";
-            nextLyric.textContent = song.lyrics[index + 1]?.text || "";
+            const nextItem = song.lyrics[index + 1];
+            nextLyric.textContent = nextItem ? nextItem.text || "" : "";
         }
 
         function updateProgress(position) {
-            const duration = Number(song?.duration) || 0;
+            const duration = Number(song ? song.duration : null) || 0;
             const percent = duration > 0
                 ? Math.max(0, Math.min(100, (position / duration) * 100))
                 : 0;
@@ -413,11 +414,15 @@
             };
 
             ws.onclose = () => {
+                playback.playing = false;
+                receivedAt = performance.now();
                 setStatus("Desconectado", "error");
                 window.setTimeout(connect, 1000);
             };
 
             ws.onerror = () => {
+                playback.playing = false;
+                receivedAt = performance.now();
                 setStatus("Erro de conexao", "error");
             };
         }

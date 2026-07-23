@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import threading
 import time
 
 from network import NetworkServer
 from reaper_controller import ReaperController
 from models import Song
+
+logger = logging.getLogger(__name__)
 
 
 class VisualSyncManager:
@@ -20,6 +23,7 @@ class VisualSyncManager:
 
     def start(self) -> None:
 
+        logger.info("Iniciando Visual Sync.")
         self._network.start()
 
         self._running = True
@@ -31,6 +35,7 @@ class VisualSyncManager:
         )
 
         self._thread.start()
+        logger.info("Visual Sync iniciado.")
 
     def stop(self) -> None:
 

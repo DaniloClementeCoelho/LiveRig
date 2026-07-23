@@ -1,5 +1,13 @@
 # LiveRig Visual Studio
 
+pasta importantes de sub projetos
+/teleprompt : funcionalidade de mostrar a letra
+/video:  projetar videoclipes sincronizados
+
+
+
+
+
 Modulo de criacao visual para o LiveRig.
 
 O objetivo do projeto e preparar conteudo visual por musica: manifestos de cenas, assets gerados/importados, workflows de IA e pacotes futuros para reproducao no palco.

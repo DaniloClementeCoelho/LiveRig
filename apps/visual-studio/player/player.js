@@ -212,7 +212,7 @@ async function loadLiveRigManifest(songId) {
   }
 
   const payload = await response.json();
-  const manifestSrc = payload.visual?.manifest?.src;
+  const manifestSrc = payload.visual && payload.visual.manifest ? payload.visual.manifest.src : null;
 
   if (!manifestSrc) {
     return;

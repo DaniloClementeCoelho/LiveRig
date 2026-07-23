@@ -45,3 +45,40 @@ As midias sao servidas por:
 ```text
 /api/songs/{song_id}/media/{arquivo}
 ```
+para inserir partes no video, alterar o config.json da  seguinte forma:
+
+{
+  "title": "Comfortably Numb",
+  "artist": "Pink Floyd",
+  "project": "Comfortably Numb.rpp",
+  "duration": 384,
+
+  "visual": {
+    "mode": "auto",
+    "media_folder": "Media",
+    "shuffle_interval": 12
+  },
+
+  "videos": [
+    {
+      "start": 0,
+      "end": 30,
+      "file": "Media/intro.mp4"
+    }
+  ],
+
+  "visual_cues": [
+    {
+      "start": 60,
+      "end": 75,
+      "type": "message",
+      "text": "CANTA COM A GENTE"
+    },
+    {
+      "start": 90,
+      "end": 120,
+      "type": "media",
+      "file": "Media/solo.mp4"
+    }
+  ]
+}

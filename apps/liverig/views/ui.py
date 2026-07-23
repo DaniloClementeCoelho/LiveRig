@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import platform
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -13,6 +14,8 @@ from reaper_controller import ReaperController
 from settings import AppSettings
 from song_manager import SongManager
 import json
+
+logger = logging.getLogger(__name__)
 
 
 def print_song_list(songs: list[Song]) -> None:
@@ -101,6 +104,7 @@ class LiveRigApp:
         self.playlist_view = None
         self.player_view = None
         self.visual_sync = None
+        self._visual_sync_error = None
 
         self.root.bind_all("<space>", self._handle_space_pause, add="+")
         self.root.bind_all("<KeyPress-space>", self._handle_space_pause, add="+")
@@ -270,8 +274,10 @@ class LiveRigApp:
         self.library_view.set_songs(self.songs)
         self.library_view.select(self.selected_song, notify=False)
         self._show_song(self.selected_song)
-        self._start_visual_sync()
+        visual_sync_started = self._start_visual_sync()
         self._start_reaper_engine()
+        if not visual_sync_started and self._visual_sync_error is not None:
+            self.status_var.set(self._visual_sync_error)
         self._update_lyrics()
 
     def _is_usable_shows_dir(self, shows_dir: Path) -> bool:
@@ -344,18 +350,24 @@ class LiveRigApp:
 
         self.status_var.set("REAPER pronto.")
 
-    def _start_visual_sync(self) -> None:
+    def _start_visual_sync(self) -> bool:
         if self.visual_sync is not None:
-            return
+            return True
 
         try:
             from visual_sync import VisualSyncManager
 
+            logger.info("Criando VisualSyncManager.")
             self.visual_sync = VisualSyncManager(self.reaper)
             self.visual_sync.start()
+            self._visual_sync_error = None
+            return True
         except Exception as exc:
+            logger.exception("Visual Sync nao iniciado.")
             self.visual_sync = None
-            self.status_var.set(f"Visual Sync nao iniciado: {exc}")
+            self._visual_sync_error = f"Visual Sync nao iniciado: {exc}"
+            self.status_var.set(self._visual_sync_error)
+            return False
 
     def _update_lyrics(self) -> None:
         if self.player_view is None:

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import socket
 import threading
+import time
 from pathlib import Path
 from urllib.parse import quote
 
@@ -15,6 +17,7 @@ from lyrics_loader import load_lyrics
 from models import Song
 from network.connection_manager import ConnectionManager
 from playback.playback_state import PlaybackState
+from resource_path import resource_path
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +94,10 @@ class HttpServer:
 
             return payload
 
-        liverig_folder = Path(__file__).resolve().parents[1]
-        apps_folder = Path(__file__).resolve().parents[2]
-        teleprompt_folder = apps_folder / "visual-studio" / "teleprompt"
-        video_folder = apps_folder / "visual-studio" / "video"
+        teleprompt_folder = resource_path("visual-studio", "teleprompt")
+        video_folder = resource_path("visual-studio", "video")
+        logger.info("Teleprompt folder: %s", teleprompt_folder)
+        logger.info("Video folder: %s", video_folder)
 
         @self._app.get("/")
         async def teleprompt_root_endpoint():
@@ -114,7 +117,7 @@ class HttpServer:
         @self._app.get("/pano_de_fundo.jpg")
         async def video_background_endpoint():
 
-            background = liverig_folder / "pano_de_fundo.jpg"
+            background = resource_path("pano_de_fundo.jpg")
             if not background.exists() or not background.is_file():
                 raise HTTPException(status_code=404, detail="Pano de fundo nao encontrado.")
 
@@ -406,20 +409,53 @@ class HttpServer:
             host=self._host,
             port=self._port,
             log_level="warning",
+            log_config=None,
             access_log=False,
         )
 
         self._server = uvicorn.Server(config)
 
         self._thread = threading.Thread(
-            target=self._server.run,
+            target=self._run_server,
             daemon=True,
             name="LiveRigHttpServer",
         )
 
         self._thread.start()
 
-        self._running = True
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            if self._can_connect():
+                self._running = True
+                logger.info("HTTP server iniciado em %s:%s.", self._host, self._port)
+                return
+
+            if self._thread is not None and not self._thread.is_alive():
+                break
+
+            time.sleep(0.1)
+
+        raise RuntimeError(
+            f"Servidor HTTP nao iniciou em {self._host}:{self._port}. "
+            "Veja logs em %APPDATA%\\LiveRig\\logs\\liverig.log."
+        )
+
+    def _run_server(self) -> None:
+        try:
+            logger.info("Iniciando Uvicorn em %s:%s.", self._host, self._port)
+            if self._server is not None:
+                self._server.run()
+            logger.info("Uvicorn finalizado.")
+        except BaseException:
+            logger.exception("Falha no servidor HTTP.")
+            raise
+
+    def _can_connect(self) -> bool:
+        try:
+            with socket.create_connection(("127.0.0.1", self._port), timeout=0.2):
+                return True
+        except OSError:
+            return False
 
     def stop(self) -> None:
 

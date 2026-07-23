@@ -13,4 +13,12 @@ def app_root() -> Path:
 
 
 def resource_path(*parts) -> Path:
-    return app_root().joinpath(*parts)
+    root = app_root()
+    path = root.joinpath(*parts)
+    if path.exists():
+        return path
+
+    if parts and parts[0] == "visual-studio":
+        return root.parent.joinpath(*parts)
+
+    return path

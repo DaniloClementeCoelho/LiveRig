@@ -56,10 +56,9 @@
         .backdrop {
             position: fixed;
             inset: 0;
-            background-image: url("/pano_de_fundo.jpg");
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .hud {
@@ -189,7 +188,7 @@
 </head>
 
 <body>
-    <div class="backdrop" id="backdrop"></div>
+    <img class="backdrop" id="backdrop" src="/pano_de_fundo.jpg" alt="">
     <img class="image" id="image" alt="">
     <video id="video" muted playsinline preload="auto"></video>
     <div class="empty" id="empty"></div>
@@ -337,6 +336,15 @@
         }
 
         function updateVideo(position) {
+            if (!playback.playing) {
+                if (!video.paused) {
+                    video.pause();
+                }
+                hideCueOverlay();
+                showFallback();
+                return;
+            }
+
             const cue = cueAt(position);
             if (cue) {
                 updateCue(cue, position);
@@ -584,6 +592,10 @@
 
             if (media.type === "video") {
                 video.loop = true;
+                if (video.src === absoluteUrl(media.src)) {
+                    showVideo();
+                    return;
+                }
                 video.src = media.src;
                 video.currentTime = 0;
                 showVideo();
@@ -635,11 +647,23 @@
             };
 
             ws.onclose = () => {
+                playback.playing = false;
+                receivedAt = performance.now();
+                video.loop = false;
+                video.pause();
+                hideCueOverlay();
+                showFallback();
                 setStatus("Desconectado", "error");
                 window.setTimeout(connect, 1000);
             };
 
             ws.onerror = () => {
+                playback.playing = false;
+                receivedAt = performance.now();
+                video.loop = false;
+                video.pause();
+                hideCueOverlay();
+                showFallback();
                 setStatus("Erro de conexao", "error");
             };
         }
