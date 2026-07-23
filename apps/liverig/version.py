@@ -1,5 +1,5 @@
 APP_NAME = "LiveRig"
-APP_VERSION = "1.4"
+APP_VERSION = "1.5"
 
 COMPANY = "Banda Firebird"
 

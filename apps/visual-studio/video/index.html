@@ -387,7 +387,7 @@
         }
 
         function cueAt(position) {
-            const cues = song?.visual?.cues;
+            const cues = song && song.visual ? song.visual.cues : null;
             if (!Array.isArray(cues) || cues.length === 0) {
                 return null;
             }
@@ -486,7 +486,7 @@
         }
 
         function currentLyricText(position) {
-            const lyrics = song?.lyrics;
+            const lyrics = song ? song.lyrics : null;
             if (!Array.isArray(lyrics) || lyrics.length === 0) {
                 return "";
             }
@@ -500,7 +500,7 @@
                 }
             }
 
-            return current?.text || "";
+            return current ? current.text || "" : "";
         }
 
         function showCueText(text) {
@@ -526,7 +526,7 @@
                 return;
             }
 
-            const interval = Number(song?.visual?.shuffle_interval) || 12;
+            const interval = Number(song && song.visual ? song.visual.shuffle_interval : null) || 12;
             const slot = Math.floor(Math.max(0, position) / Math.max(1, interval));
 
             if (currentAutoSlot !== slot || currentAutoIndex === null) {
@@ -535,7 +535,7 @@
                 showAutoMedia(media[currentAutoIndex]);
             }
 
-            if (media[currentAutoIndex]?.type === "video") {
+            if (media[currentAutoIndex] && media[currentAutoIndex].type === "video") {
                 if (playback.playing) {
                     const promise = video.play();
                     if (promise) {
@@ -550,7 +550,7 @@
         }
 
         function autoMedia() {
-            const media = song?.visual?.media;
+            const media = song && song.visual ? song.visual.media : null;
             return Array.isArray(media) ? media : [];
         }
 

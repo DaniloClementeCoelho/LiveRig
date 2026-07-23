@@ -4,6 +4,7 @@ Scripts de build e instalacao do LiveRig para Windows.
 
 ## Gerar release
 
+    antes de rodar, altere a versão: apps/liverig/version.py
 ```powershell
 python packaging\build.py
 ```
