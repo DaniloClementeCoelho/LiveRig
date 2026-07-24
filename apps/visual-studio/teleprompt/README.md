@@ -14,27 +14,27 @@ python apps\liverig\main.py
 3. Abra no navegador do proprio computador:
 
 ```text
-http://127.0.0.1:8080/
+http://127.0.0.1:8090/
 ```
 
 Tambem existe a rota explicita:
 
 ```text
-http://127.0.0.1:8080/teleprompt
+http://127.0.0.1:8090/teleprompt
 ```
 
 Para acessar de outro computador ou celular na mesma rede Wi-Fi, use o IP local
 do computador que esta rodando o LiveRig:
 
 ```text
-http://SEU_IP_LOCAL:8080/
-http://SEU_IP_LOCAL:8080/teleprompt
+http://SEU_IP_LOCAL:8090/
+http://SEU_IP_LOCAL:8090/teleprompt
 ```
 
 Exemplo:
 
 ```text
-http://192.168.0.25:8080/teleprompt
+http://192.168.0.25:8090/teleprompt
 ```
 
 4. Toque uma musica no LiveRig. A tela deve mostrar a letra atual, a proxima linha e o progresso.

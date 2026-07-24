@@ -271,7 +271,7 @@ O primeiro prototipo ja validou os seguintes pontos:
 
 - player web local em `player/`, com modo standalone;
 - manifesto piloto em `projects/a-little-respect/orquestrador.json`;
-- sincronizacao do player com o LiveRig por WebSocket em `ws://127.0.0.1:8080/ws`;
+- sincronizacao do player com o LiveRig por WebSocket em `ws://127.0.0.1:8090/ws`;
 - carregamento de manifesto visual referenciado pelo LiveRig via `visual.manifest`;
 - API FastAPI local em `api/main.py`;
 - cliente ComfyUI em `src/comfyui_client.py`;

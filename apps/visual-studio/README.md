@@ -21,7 +21,7 @@ O MVP inicial ja possui:
 - tela de video/telao em `video/`;
 - renderizacao de cenas do tipo `color`, `image` e `video`;
 - manifesto piloto em `projects/a-little-respect/orquestrador.json`;
-- sincronizacao opcional com o LiveRig via `ws://127.0.0.1:8080/ws`;
+- sincronizacao opcional com o LiveRig via `ws://127.0.0.1:8090/ws`;
 - API FastAPI local em `api/main.py`;
 - integracao inicial com ComfyUI em `http://192.168.15.9:8188`;
 - workflow SDXL Turbo API em `workflows/sdxlturbo_api.json`;
@@ -123,18 +123,18 @@ Sem o LiveRig aberto, o player funciona em modo local. Com o LiveRig aberto, ele
 Com o LiveRig aberto, acesse:
 
 ```text
-http://127.0.0.1:8080/
-http://127.0.0.1:8080/teleprompt
-http://127.0.0.1:8080/video
+http://127.0.0.1:8090/
+http://127.0.0.1:8090/teleprompt
+http://127.0.0.1:8090/video
 ```
 
 Em outro computador, celular ou projetor na mesma rede Wi-Fi, troque
 `127.0.0.1` pelo IP local do computador que roda o LiveRig:
 
 ```text
-http://SEU_IP_LOCAL:8080/
-http://SEU_IP_LOCAL:8080/teleprompt
-http://SEU_IP_LOCAL:8080/video
+http://SEU_IP_LOCAL:8090/
+http://SEU_IP_LOCAL:8090/teleprompt
+http://SEU_IP_LOCAL:8090/video
 ```
 
 O teleprompt mostra letra atual, proxima linha e progresso. A tela de video mostra midias e cues visuais para o telao.

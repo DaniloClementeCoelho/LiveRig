@@ -1,6 +1,6 @@
 const manifestPath = "../projects/a-little-respect/orquestrador.json";
-const liveRigBaseUrl = "http://127.0.0.1:8080";
-const liveRigWebSocketUrl = "ws://127.0.0.1:8080/ws";
+const liveRigBaseUrl = "http://127.0.0.1:8090";
+const liveRigWebSocketUrl = "ws://127.0.0.1:8090/ws";
 
 const stage = document.querySelector("#stage");
 const visualLayer = document.querySelector("#visualLayer");

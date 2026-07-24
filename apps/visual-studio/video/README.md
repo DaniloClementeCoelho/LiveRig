@@ -14,20 +14,20 @@ python apps\liverig\main.py
 3. Abra no navegador ou no computador ligado ao telao:
 
 ```text
-http://127.0.0.1:8080/video
+http://127.0.0.1:8090/video
 ```
 
 Para acessar de outro computador ou projetor na mesma rede Wi-Fi, use o IP local
 do computador que esta rodando o LiveRig:
 
 ```text
-http://SEU_IP_LOCAL:8080/video
+http://SEU_IP_LOCAL:8090/video
 ```
 
 Exemplo:
 
 ```text
-http://192.168.0.25:8080/video
+http://192.168.0.25:8090/video
 ```
 
 4. Toque uma musica no LiveRig. A tela deve acompanhar a posicao do REAPER e exibir midias configuradas.

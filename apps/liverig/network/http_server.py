@@ -30,7 +30,7 @@ DEFAULT_SHUFFLE_INTERVAL = 12
 class HttpServer:
 
     DEFAULT_HOST = "0.0.0.0"
-    DEFAULT_PORT = 8080
+    DEFAULT_PORT = 8090
 
     def __init__(
         self,
